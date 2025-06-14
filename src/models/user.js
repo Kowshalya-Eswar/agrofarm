@@ -1,13 +1,16 @@
-const { Timestamp } = require("bson");
+const validator = require("validator");
 const mongoose = require("mongoose");
 
 const userSchema = mongoose.Schema({
     firstName: {
         type: String,
-        required: true
+        minimumLength: 4,
+        maximumLength: 100
     },
     lastName: {
-        type: String
+        type: String,
+        minimumLength: 4,
+        maximumLength: 100
     },
     userName: {
         type: String,
@@ -21,7 +24,22 @@ const userSchema = mongoose.Schema({
         unique: true,
         trim: true,
         lowercase: true,
-        match: [/.+@.+\..+/, 'Please fill a valid email address']
+//match: [/.+@.+\..+/, 'Please fill a valid email address']
+       validate(value) {
+         if(!validator.isEmail(value)) {
+            throw new Error("invalid email id");
+         }
+       }
+    },
+    password: {
+        type: String,
+        trim: true,
+        required:true, 
+        validate(value) {
+            if(!validator.isStrongPassword(value)) {
+                throw new Error("your password is not strong: "+value);
+            }
+        }
     },
     phone: {
         type: String

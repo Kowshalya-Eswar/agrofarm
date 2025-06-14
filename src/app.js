@@ -1,10 +1,11 @@
 const express = require("express");
-
+const bcrypt = require("bcrypt");
+const validator = require("validator");
 const app = express();
 const PORT = process.env.PORT || 7777;
 const connectDB = require("./config/database");
 const User = require("./models/user.js");
-const { ReturnDocument } = require("mongodb");
+const ValidateRegisterData = require('./utils/validate');
 connectDB().then(()=>{
     console.log("database connection established");
 }).catch(()=>{
@@ -13,8 +14,17 @@ connectDB().then(()=>{
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 app.post("/api/user/register", async (req,res)=> {
-    const user  = new User(req.body);
     try {
+        //validation of the data
+
+        ValidateRegisterData(req);
+        const {firstName, lastName, email, userName, age, password, phone, gender} = req.body;
+        //encrypt the password
+         const passwordHash = await bcrypt.hash(password,10);
+        user  = new User({
+            firstName, lastName, email, userName, password:passwordHash, age, phone, gender
+        });
+
         await user.save();
         res.send({'message': "user added successfully"});
     } catch(err) {
@@ -114,6 +124,13 @@ app.delete("/api/user", async(req,res)=> {
 
 app.patch("/api/user", async(req,res)=>{
     const data = req.body;
+    const ALLOWED_UPDATES = ["firstName","lastName","gender","age","phone","role"];
+    const isUpdateAllowed = Object.keys(data).every((k) => 
+        ALLOWED_UPDATES.includes(k)
+    );
+    if(!isUpdateAllowed) {
+        return sendErrorResponse(res, 400, 'update not allowed',[]);
+    }
     try{
        const user = await User.findOneAndUpdate({email:data.email}, data, {
         returnDocument: "after",
@@ -131,7 +148,32 @@ app.patch("/api/user", async(req,res)=>{
         return sendErrorResponse(res, 400, 'unable to update the user', err)
     }
 })
-app.listen(7777,()=>{
+
+app.post("/api/login",async(req,res)=>{
+    try {
+        const {password, email} = req.body;
+        if (!validator.isEmail(email)) {
+             throw new Error("invalid mail id");
+        }
+        const userData = await User.findOne({email:email});
+        if (!userData) {
+           throw new Error("wrong credentials");
+        }
+        const isPasswordValid = await bcrypt.compare(password, userData.password)
+        if (isPasswordValid) {
+            res.status(200).json({
+                success:true,
+                message:"login successfull"
+            })
+        } else {
+            throw new Error("wrong credentials");
+        }
+    }
+    catch(err) {
+        return sendErrorResponse(res, 400, 'login attempt failed', err)
+    }
+})
+app.listen(PORT,()=>{
     console.log("server is start running")
 });
 

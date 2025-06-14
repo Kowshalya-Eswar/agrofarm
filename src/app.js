@@ -1,11 +1,15 @@
+require('dotenv').config();
 const express = require("express");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 const app = express();
 const PORT = process.env.PORT || 7777;
 const connectDB = require("./config/database");
 const User = require("./models/user.js");
 const ValidateRegisterData = require('./utils/validate');
+const {userAuth, adminAuth} = require('./middleware/auth');
 connectDB().then(()=>{
     console.log("database connection established");
 }).catch(()=>{
@@ -13,6 +17,7 @@ connectDB().then(()=>{
 })
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
+app.use(cookieParser());
 app.post("/api/user/register", async (req,res)=> {
     try {
         //validation of the data
@@ -40,12 +45,12 @@ app.post("/api/user/register", async (req,res)=> {
  * @query sortBy {string} - Field to sort by (e.g., 'username', 'createdAt')
  * @query order {string} - Sort order ('asc' or 'desc', default: 'asc')
  */
-app.get("/api/users", async (req,res)=> {
+app.get("/api/users", userAuth, adminAuth, async (req,res)=> {
     try {
         const { page = 1, limit = 10, search, sortBy = 'createdAt', order = 'desc' } = req.query;
         const pageNum = parseInt(page);
         const limitNum = Math.min(parseInt(limit),100);
-
+        
         if (isNaN(pageNum) || pageNum < 1) {
             return sendErrorResponse(res, 400, 'Invalid page number. Must be a positive integer.');
         }
@@ -91,7 +96,7 @@ app.get("/api/users", async (req,res)=> {
     }
 })
 
-app.get("/api/user/:emailId", async(req,res)=> {
+app.get("/api/user/:emailId", userAuth,adminAuth, async(req,res)=> {
     const {emailId} = req.params;
     try{
         user = await User.find({email: emailId}).select('-__v');
@@ -106,7 +111,7 @@ app.get("/api/user/:emailId", async(req,res)=> {
     }
 })
 
-app.delete("/api/user", async(req,res)=> {
+app.delete("/api/user", userAuth, adminAuth, async(req,res)=> {
     const emailId = req.body.email;
     try{
         const deleteUser = await User.findOneAndDelete({email:emailId});
@@ -122,7 +127,7 @@ app.delete("/api/user", async(req,res)=> {
     }
 })
 
-app.patch("/api/user", async(req,res)=>{
+app.patch("/api/user", userAuth, adminAuth, async(req,res)=>{
     const data = req.body;
     const ALLOWED_UPDATES = ["firstName","lastName","gender","age","phone","role"];
     const isUpdateAllowed = Object.keys(data).every((k) => 
@@ -149,7 +154,7 @@ app.patch("/api/user", async(req,res)=>{
     }
 })
 
-app.post("/api/login",async(req,res)=>{
+app.post("/api/login", async(req,res)=>{
     try {
         const {password, email} = req.body;
         if (!validator.isEmail(email)) {
@@ -161,6 +166,8 @@ app.post("/api/login",async(req,res)=>{
         }
         const isPasswordValid = await bcrypt.compare(password, userData.password)
         if (isPasswordValid) {
+            const token = await jwt.sign({_id:userData._id},process.env.TOKEN_KEY, {expiresIn: "1d"})
+            res.cookie("token", token );
             res.status(200).json({
                 success:true,
                 message:"login successfull"
@@ -172,6 +179,13 @@ app.post("/api/login",async(req,res)=>{
     catch(err) {
         return sendErrorResponse(res, 400, 'login attempt failed', err)
     }
+})
+
+app.get("/api/profile", userAuth, (req,res)=>{
+    res.json({
+        success:true,
+        data:req.user
+    })
 })
 app.listen(PORT,()=>{
     console.log("server is start running")

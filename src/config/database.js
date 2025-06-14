@@ -1,8 +1,7 @@
-const { connect } = require('http2');
+require('dotenv').config();
 const mongoose = require('mongoose');
 const connectDB = async()=>{
-   // await mongoose.connect('mongodb+srv://kowsiganeshan:<db_password>@cluster0.wsbnn.mongodb.net/');
-     await mongoose.connect("mongodb+srv://kowsiganeshan:test123@cluster0.wsbnn.mongodb.net/agrifarm");
+     await mongoose.connect(process.env.DATABASE_URL);
 }
 
 module.exports = connectDB;

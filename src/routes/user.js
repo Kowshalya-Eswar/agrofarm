@@ -1,7 +1,6 @@
 const express = require("express")
 const userRouter = express.Router();
 const sendErrorResponse = require("../utils/sendErrorResponse");
-const bcrypt = require("bcrypt");
 const validator = require("validator");
 const User = require("../models/user.js");
 const ValidateRegisterData = require('../utils/validate');
@@ -12,12 +11,9 @@ userRouter.post("/api/user/register", async (req,res)=> {
 
         ValidateRegisterData(req);
         const {firstName, lastName, email, userName, age, password, phone, gender} = req.body;
-        //encrypt the password
-         const passwordHash = await bcrypt.hash(password,10);
         user  = new User({
-            firstName, lastName, email, userName, password:passwordHash, age, phone, gender
+            firstName, lastName, email, userName, password, age, phone, gender
         });
-
         await user.save();
         res.send({'message': "user added successfully"});
     } catch(err) {
@@ -176,9 +172,26 @@ userRouter.get("/api/profile", userAuth, (req,res)=>{
     })
 })
 
+userRouter.patch("/api/resetPassword", userAuth, async(req,res)=>{
+    try {
+        user_id = req.user._id;
+        await User.findByIdAndUpdate(user_id,{password:req.body.password}, {
+            runValidators:true
+        });
+        res.status(200).json({
+            success: true,
+            message: "password updated successfully"
+        })
+
+    } catch(err) {
+        sendErrorResponse(res, 400, 'reset password failed', err);
+    }
+    
+})
+
 userRouter.get("/api/logout", (req,res)=> {
     res.cookie('token', null, {
         expires: new Date(Date.now()),
-    }).send("logout successfull");
+    }).send("logout successfully");
 })
 module.exports = userRouter;

@@ -75,6 +75,17 @@ userSchema.methods.getJWT = async function() {
     return token;
 }
 
+userSchema.pre('save', async function (next) {
+    try {
+        if(this.isModified('password')) {
+            this.password = await bcrypt.hash(this.password,10);
+        }
+    } catch(err) {
+        throw new Error(err.message)
+    }
+    
+});
+
 const User = mongoose.model("User",userSchema);
 
 module.exports = User;

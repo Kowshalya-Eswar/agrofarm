@@ -42,11 +42,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use("/", userRouter);
-
 app.use("/", productRouter);
-
 app.use("/", productImageRouter);
-
 app.use("/", orderRouter);
 
 // Start the Express server and make it listen for incoming requests on the specified port.

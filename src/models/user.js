@@ -65,10 +65,14 @@ const userSchema = mongoose.Schema({
         type: Number,        // Specifies that age must be a number.
         min: 18,             // Custom validation: enforces a minimum age of 18.
     },
-    // uuid field: stores unique identifier for the user
-    uuid: {
+    // userId field: stores unique identifier for the user
+    userId: {
         type: String,
-        unique: true
+        unique: true,
+        required: true,
+        immutable:true,
+        index:true,
+        default:uuidv4
     },
     // gender field: Stores the user's gender.
     gender: {
@@ -121,7 +125,7 @@ userSchema.methods.getJWT = async function() {
 userSchema.pre('save', async function (next) {
     try {
         if(this.isNew) {
-            this.uuid = uuidv4();
+            this.userId = uuidv4();
         }
         // Checks if the 'password' field has been modified or is new.
         // This prevents re-hashing an already hashed password on subsequent saves if it hasn't changed.

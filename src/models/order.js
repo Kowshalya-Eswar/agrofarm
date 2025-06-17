@@ -13,6 +13,7 @@ const orderSchema = mongoose.Schema({
     },
     items: [
         {
+            _id: false,
             sku: {
                 type: String,
                 required: true,

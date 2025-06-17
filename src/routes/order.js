@@ -14,17 +14,18 @@ const mongoose = require('mongoose');
  * @middleware userAuth
  * @body {object} - Contains order details: `items` (Array of objects: `{ sku: string, qty: number }`), `address`: string.
  */
-orderRouter.post('api/orders', userAuth, async (req, res) => {
+orderRouter.post('/api/orders', userAuth, async (req, res) => {
+     let orderItemsForDb = [];
     try {
         const { items, address } = req.body;
-        const userId = req.user.uuid;
+        const userId = req.user.userId;
 
         if (!items || !Array.isArray(items) || items.length === 0 || !address) {
             return sendErrorResponse(res, 400, "Order must contain items and a shipping address.");
         }
 
         let calculatedTotalAmount = 0;
-        const orderItemsForDb = [];
+       
 
         for (const item of items) {
             if (!item.sku || typeof item.qty !== 'number' || item.qty < 1 || !Number.isInteger(item.qty)) {
@@ -100,11 +101,12 @@ orderRouter.post('api/orders', userAuth, async (req, res) => {
  * @access Private (Admin Only)
  * @middleware userAuth, adminAuth
  */
-orderRouter.get('api/orders', userAuth, adminAuth, async (req, res) => {
+orderRouter.get('/api/orders', userAuth, adminAuth, async (req, res) => {
     try {
-        const orders = await Order.find({})
-            .populate('userId', 'userName email')
-            .select('-__v')
+       const orders = await Order.find({})
+            // CORRECTED POPULATE: Use foreignField to match Order.userId with User.userId
+            .populate({ path: 'userId', model: 'User', select: 'userName email userId -_id', foreignField: 'userId' })
+            .select('-__v -_id')
             .sort({ createdAt: -1 });
 
         if (orders.length === 0) {
@@ -129,7 +131,7 @@ orderRouter.get('api/orders', userAuth, adminAuth, async (req, res) => {
  * @middleware userAuth
  * @param {string} id - The MongoDB _id of the order to retrieve.
  */
-orderRouter.get('api/orders/:id', userAuth, async (req, res) => {
+orderRouter.get('/api/orders/:id', userAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user._id;
@@ -139,7 +141,12 @@ orderRouter.get('api/orders/:id', userAuth, async (req, res) => {
             return sendErrorResponse(res, 400, 'Invalid order ID format.');
         }
 
-        const order = await Order.findById(id).populate('userId', 'userName email').select('-__v');
+        const order = await Order.findById(id).populate({
+            path :'userId',
+            modal: 'User',
+            foreignField: 'userId',
+            select:'userId email userName -_id'
+        }).select('-__v');
 
         if (!order) {
             return sendErrorResponse(res, 404, 'Order not found.');
@@ -167,7 +174,7 @@ orderRouter.get('api/orders/:id', userAuth, async (req, res) => {
  * @param {string} id - The MongoDB _id of the order to update.
  * @body {object} - Contains the new status: `{ "status": "processing" }`
  */
-orderRouter.patch('api/orders/:id/status', userAuth, adminAuth, async (req, res) => {
+orderRouter.patch('/api/orders/:id/status', userAuth, adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;

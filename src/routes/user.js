@@ -25,10 +25,10 @@ userRouter.post("/api/user/register", async (req,res)=> {
         // This function is expected to throw an error if validation fails.
         ValidateRegisterData(req);
         // Destructure user details from the request body.
-        const {firstName, lastName, email, userName, age, password, phone, gender, uuid} = req.body;
+        const {firstName, lastName, email, userName, age, password, phone, gender, role} = req.body;
         // Create a new User document instance with the received data.
         user  = new User({
-            firstName, lastName, email, userName, password, age, phone, gender, uuid
+            firstName, lastName, email, userName, password, age, phone, gender, role
         });
         // Save the new user document to the database. This will trigger Mongoose schema validations.
         await user.save();

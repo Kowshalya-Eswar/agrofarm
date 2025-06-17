@@ -1,14 +1,10 @@
-// Load environment variables from a .env file into process.env.
-// This ensures sensitive information like JWT secret keys are not hardcoded.
+
 require("dotenv").config();
-// Import the 'validator' library for various string validations (e.g., email format, strong password check).
 const validator = require("validator");
-// Import the Mongoose library to define schemas, create models, and interact with MongoDB.
-const mongoose = require("mongoose");
-// Import 'bcrypt' for hashing passwords to securely store them in the database.
-const bcrypt = require("bcrypt");
-// Import 'jsonwebtoken' for creating and verifying JSON Web Tokens (JWTs) for authentication.
-const jwt = require("jsonwebtoken");
+const mongoose  = require("mongoose");
+const bcrypt    = require("bcrypt");
+const {v4:uuidv4} = require("uuid"); 
+const jwt       = require("jsonwebtoken");
 
 // Define the Mongoose schema for the User model.
 // This schema outlines the structure, data types, validation rules, and custom methods
@@ -16,9 +12,9 @@ const jwt = require("jsonwebtoken");
 const userSchema = mongoose.Schema({
     // firstName field: Stores the user's first name.
     firstName: {
-        type: String,        // Specifies that firstName must be a string.
-        minimumLength: 4,    // Custom validation: enforces a minimum length of 4 characters.
-        maximumLength: 100   // Custom validation: enforces a maximum length of 100 characters.
+        type: String,        
+        minimumLength: 4,    
+        maximumLength: 100   
     },
     // lastName field: Stores the user's last name.
     lastName: {
@@ -69,6 +65,11 @@ const userSchema = mongoose.Schema({
         type: Number,        // Specifies that age must be a number.
         min: 18,             // Custom validation: enforces a minimum age of 18.
     },
+    // uuid field: stores unique identifier for the user
+    uuid: {
+        type: String,
+        unique: true
+    },
     // gender field: Stores the user's gender.
     gender: {
         type: String,        // Specifies that gender must be a string.
@@ -78,7 +79,7 @@ const userSchema = mongoose.Schema({
             if (!["male","female","others"].includes(value.toLocaleLowerCase())) {
                 throw new Error("Gender data is not valid"); // Throws an error if the provided gender is not 'male', 'female', or 'others'.
             }
-        }
+        } 
     },
     // role field: Stores the user's role(s) as an array of strings.
     role: {
@@ -119,6 +120,9 @@ userSchema.methods.getJWT = async function() {
 // It's primarily used here for password hashing.
 userSchema.pre('save', async function (next) {
     try {
+        if(this.isNew) {
+            this.uuid = uuidv4();
+        }
         // Checks if the 'password' field has been modified or is new.
         // This prevents re-hashing an already hashed password on subsequent saves if it hasn't changed.
         if(this.isModified('password')) {

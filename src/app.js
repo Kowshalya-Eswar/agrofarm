@@ -3,7 +3,8 @@ require('dotenv').config();
 const express = require("express");
 const userRouter = require("./routes/user");
 const productRouter = require("./routes/product");
-
+const productImageRouter = require('./routes/productImage');
+const orderRouter = require("./routes/order");
 // Import 'cookie-parser' middleware for parsing cookies attached to the client request object.
 const cookieParser = require("cookie-parser");
 
@@ -11,7 +12,7 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 7777;
 const connectDB = require("./config/database");
-const productImageRouter = require('./routes/productImage');
+
 
 const path = require('path'); // For serving static files
 const fs = require('fs');
@@ -45,6 +46,8 @@ app.use("/", userRouter);
 app.use("/", productRouter);
 
 app.use("/", productImageRouter);
+
+app.use("/", orderRouter);
 
 // Start the Express server and make it listen for incoming requests on the specified port.
 app.listen(PORT, () => {

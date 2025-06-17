@@ -1,6 +1,7 @@
 // Import the Mongoose library, which provides a straightforward, schema-based solution
 // to model your application data for MongoDB.
 const mongoose = require("mongoose");
+const productImageRouter = require("../routes/productImage");
 
 // Define the schema for the Product model.
 // A Mongoose schema defines the structure of the documents within a MongoDB collection,
@@ -30,17 +31,20 @@ productSchema = mongoose.Schema({
     },
     // stock field:
     stock: {
-        type: Number,     // Specifies that the stock must be a number.
-        required: true    // Marks this field as mandatory.
+        type: Number,
+        required: true
     },
     // unit field:
     unit: {
-        type: String      // Specifies that the unit (e.g., "kg", "pcs") must be a string.
+        type: String ,
+        enum : {
+            values: ['kg', 'number'],
+            message: '{VALUE} not supported'
+        }
     },
     // sku (Stock Keeping Unit) field:
     sku: {
         type: String,     // Specifies that the SKU must be a string.
-        required: true,   // Marks this field as mandatory.
         trim: true,       // Removes whitespace from both ends of the string.
         unique: true      // Ensures that each SKU in the database must be unique.
                           // This is critical for uniquely identifying products.
@@ -53,6 +57,29 @@ productSchema = mongoose.Schema({
     timestamps: true
 });
 
+function generateRandomSKU(length = 8) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
+
+productSchema.pre('save', function(next) {
+    try {
+        if (this.isNew) {
+            this.sku = 'prod-'+generateRandomSKU(10);
+            console.log(this.sku);
+        }
+    } catch(err) {
+        console.log(err.message);
+    }
+    next();
+
+})
+
 // Create the Product model from the defined schema.
 // 'Product' is the name of the model, which Mongoose will use to create
 // a 'products' collection in your MongoDB database (pluralized lowercase).
@@ -61,3 +88,4 @@ const Product = mongoose.model("Product", productSchema);
 // Export the Product model so it can be imported and used in other parts of your application,
 // such as Express routes or other data handling files.
 module.exports = Product;
+

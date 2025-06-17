@@ -18,15 +18,14 @@ const {userAuth, adminAuth} = require('../middleware/auth');
 productRouter.post('/api/product',userAuth, adminAuth, async(req, res)=>{
     try {
         // Destructure product details from the request body
-        const {productname, description, price, unit, stock, sku} = req.body;
+        const {productname, description, price, unit, stock} = req.body;
         // Create a new Product document instance with the received data
         const product = new Product({
             productname,
             description,
             price,
             unit,
-            stock,
-            sku
+            stock
         })
 
         // Save the new product document to the database

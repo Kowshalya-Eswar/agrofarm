@@ -18,6 +18,12 @@ const productImageSchema = mongoose.Schema({
         type: String,     // Must be a string.
         required: true,   // Mandatory, an image must have a URL.
         trim: true,       // Removes leading/trailing whitespace.
+        validate: {
+            validator: function(v) {
+                return validator.isURL(v); // Use validator.isURL()
+            },
+            message: props => `${props.value} is not a valid image URL!` // Custom error message
+        }
         // Custom validation to ensure the imageUrl is a valid URL format.
        /* validate: {
             validator: function(v) {

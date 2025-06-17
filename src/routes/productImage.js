@@ -153,7 +153,7 @@ productImageRouter.get('/api/productimages/image/:id', userAuth, async (req, res
  * @description Updates an existing product image identified by its ID.
  * Allows updating `imageUrl`, `isMain`, and the actual image *file*.
  * @access Private (Admin Only)
- * @middleware userAuth, adminAuth, upload.single('productImageFile') - Now accepts file uploads
+ * @middleware userAuth, adminAuth, upload.single('productImageFile') - accepts file uploads
  * @param {string} id - The MongoDB _id of the image to update.
  * @body {multipart/form-data} - Can contain:
  * - `productImageFile`: file (the new image file)
@@ -245,7 +245,6 @@ productImageRouter.patch(
             if (Object.keys(finalUpdateData).length === 0) {
                  return sendErrorResponse(res, 400, 'No valid update data provided after filtering.');
             }
-
 
             // Find the image by ID and update it.
             const updatedImage = await ProductImage.findByIdAndUpdate(

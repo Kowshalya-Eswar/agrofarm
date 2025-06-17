@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require("express");
 const userRouter = require("./routes/user");
 const productRouter = require("./routes/product");
+const paymentRouter = require("./routes/payment");
 const productImageRouter = require('./routes/productImage');
 const orderRouter = require("./routes/order");
 // Import 'cookie-parser' middleware for parsing cookies attached to the client request object.
@@ -45,6 +46,7 @@ app.use("/", userRouter);
 app.use("/", productRouter);
 app.use("/", productImageRouter);
 app.use("/", orderRouter);
+app.use("/", paymentRouter);
 
 // Start the Express server and make it listen for incoming requests on the specified port.
 app.listen(PORT, () => {

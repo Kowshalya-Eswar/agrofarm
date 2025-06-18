@@ -181,6 +181,9 @@ userRouter.post("/api/login", async(req,res)=>{
              throw new Error("invalid mail id");
         }
         const userData = await User.findOne({email:email});
+         // Destructure userData to exclude the password before sending to the client
+        const { password: _password, ...userWithoutPassword } = userData.toObject(); // .toObject() converts Mongoose document to plain JS object
+
         if (!userData) {
            throw new Error("wrong credentials");
         }
@@ -190,7 +193,8 @@ userRouter.post("/api/login", async(req,res)=>{
             res.cookie("token", token );
             res.status(200).json({
                 success:true,
-                message:"login successfull"
+                message:"login successfull",
+                data : userWithoutPassword
             })
         } else {
             throw new Error("wrong credentials");

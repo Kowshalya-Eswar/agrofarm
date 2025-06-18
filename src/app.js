@@ -19,6 +19,7 @@ const connectDB = require("./config/database");
 
 const path = require('path'); // For serving static files
 const fs = require('fs');
+const cors = require('cors');
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
@@ -35,6 +36,10 @@ connectDB().then(() => {
 })
 
 // --- Middleware Setup ---
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}))
 // Use built-in Express middleware to parse incoming JSON payloads in request bodies.
 // This populates `req.body` with the parsed JSON data.
 app.use(express.json());

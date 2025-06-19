@@ -17,7 +17,10 @@ const userAuth = async(req,res,next) => {
         const { token } = req.cookies;
         // If no token is found in the cookies, throw an error indicating the user is not found/authenticated.
         if (!token) {
-            throw new Error("user not found");
+            res.status(401).json({
+                status: false,
+                message: "please login"
+            })
         }
         // Verify the token using the secret key from environment variables (process.env.TOKEN_KEY).
         // If the token is valid, it returns the decoded payload.
@@ -28,7 +31,10 @@ const userAuth = async(req,res,next) => {
         const user = await User.findById(_id);
         // If no user is found for the given ID (e.g., user deleted after token issued), throw an error.
         if (!user) {
-            throw new Error("user not found");
+            res.status(401).json({
+                status: false,
+                message: "user not found"
+            })
         }
 
         // Attach the found user document to the request object.

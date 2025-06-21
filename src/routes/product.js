@@ -72,14 +72,13 @@ productRouter.patch('/api/product/:sku',userAuth, adminAuth, async(req, res)=>{
 /**
  * @route GET /api/product
  * @description Retrieves a list of products with optional pagination, searching, and sorting.
- * @middleware userAuth - Requires user authentication.
  * @query page {number} - The page number for pagination (default: 1).
  * @query limit {number} - The number of items per page (default: 10, max: 100).
  * @query search {string} - A search term to filter products by name or description.
  * @query sortBy {string} - The field to sort the results by (e.g., 'price', 'createdAt').
  * @query order {string} - The sort order, 'asc' for ascending or 'desc' for descending (default: 'desc').
  */
-productRouter.get('/api/product', userAuth, async(req,res)=>{
+productRouter.get('/api/product', async(req,res)=>{
     try {
         const { page = 1, limit = 10, search, sortBy = 'createdAt', order = 'desc' } = req.query;
         const pageNum = parseInt(page);

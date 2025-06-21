@@ -25,7 +25,33 @@ userRouter.post("/api/user/register", async (req,res)=> {
             success: true
         });
     } catch(err) {
-        return sendErrorErrorResponse(res, 400, 'failed to add user',err )
+           // --- Enhanced Error Handling for Registration ---
+        let customMessage = 'failed to add user';
+        let statusCode = 400; // Default to Bad Request
+
+        if (err.code === 11000) { // Duplicate key error (e.g., unique index violation)
+            // Extract the duplicated field from the error message
+            const field = Object.keys(err.keyValue)[0];
+            customMessage = `${field.charAt(0).toUpperCase() + field.slice(1)} '${err.keyValue[field]}' is already registered.`;
+            statusCode = 409; // Conflict
+        } else if (err.name === 'ValidationError') { // Mongoose validation errors
+            // Collect all validation error messages
+            const errors = Object.keys(err.errors).map(key => err.errors[key].message);
+            customMessage = `Validation failed: ${errors.join('; ')}`;
+            statusCode = 400;
+        } else {
+             // Handle errors thrown by ValidateRegisterData utility
+            if (err.message.includes("Firstname or Lastname should be present")) {
+                customMessage = err.message;
+                statusCode = 400;
+            }
+             // Fallback for other unexpected errors
+             customMessage = err.message || customMessage;
+             statusCode = 500; // Internal Server Error for unhandled cases
+        }
+
+        // Send an error response with the custom message and appropriate status code.
+        return sendErrorErrorResponse(res, statusCode, customMessage, err);
     }
 })
 

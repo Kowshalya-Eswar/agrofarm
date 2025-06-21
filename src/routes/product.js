@@ -127,6 +127,24 @@ productRouter.get('/api/product', async(req,res)=>{
 })
 
 /**
+ * @route GET /api/product
+ * @description Retrieves a specific product based on sku
+ * @param {string} sku - The SKU of the product to delete (from URL parameters).
+ */
+productRouter.get('/api/product/:sku', async(req,res)=>{
+    try {
+        const {sku} = req.params;
+        const product = await Product.findOne({sku:sku}).select('-__v');
+        res.status(200).json({
+            success: true,
+            message: 'Product details retrieved successfully',
+            data: product
+        });
+    } catch(err) {
+        return sendErrorResponse(res, 400, 'failed to retrieve product',err )
+    }
+})
+/**
  * @route DELETE /api/product/:sku
  * @description Deletes a product identified by its SKU.
  * @middleware userAuth, adminAuth - Requires user authentication and admin privileges.

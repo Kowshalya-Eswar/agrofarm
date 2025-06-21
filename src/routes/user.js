@@ -177,7 +177,7 @@ userRouter.patch("/api/user", userAuth, adminAuth, async(req,res)=>{
         return sendErrorErrorResponse(res, 400, 'update not allowed',[]);
     }
     try{
-       const user = await User.findOneAndUpdate({email:data.email}, data, {
+       const user = await User.findOneAndUpdate({email:req.user.email}, data, {
         returnDocument: "after",
         runValidators:true
         });

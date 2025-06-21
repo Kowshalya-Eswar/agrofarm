@@ -14,7 +14,7 @@ const validator = require('validator'); // For email validation if needed in rou
  * @middleware userAuth
  * @body {object} - Contains contact details: `name` (string), `email` (string), `phone` (string, optional), `message` (string).
  */
-contactRouter.post('/api/contacts', userAuth, async (req, res) => {
+contactRouter.post('/api/contacts', async (req, res) => {
     try {
         const { name, email, phone, message } = req.body;
 

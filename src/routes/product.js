@@ -107,7 +107,7 @@ productRouter.get('/api/product', async(req,res)=>{
             sortOptions['createdAt'] = -1;
             console.warn(`Invalid sortBy field: ${sortBy}. Defaulting to 'createdAt'.`);
         }
-        const products = await Product.find(queryFilter).sort(sortOptions).skip(skip).limit(limitNum).select('-__v');
+        const products = await Product.find(queryFilter).sort(sortOptions).skip(skip).limit(limitNum).populate({path:'images', select:'imageUrl isMain'}).select('-__v');
         const totalProducts = await Product.countDocuments(queryFilter);
         const totalPages = Math.ceil(totalProducts / limitNum);
         res.status(200).json({

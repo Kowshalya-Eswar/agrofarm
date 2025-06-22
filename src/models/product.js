@@ -63,7 +63,15 @@ productSchema.pre('save', function(next) {
     next();
 
 })
+productSchema.virtual('images', {
+  ref: 'ProductImage',
+  localField: 'sku',
+  foreignField: 'sku', // this matches in ProductImage
+  justOne: false,
+});
 
+productSchema.set('toObject', { virtuals: true });
+productSchema.set('toJSON', { virtuals: true });
 
 const Product = mongoose.model("Product", productSchema);
 

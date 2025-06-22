@@ -134,7 +134,7 @@ productRouter.get('/api/product', async(req,res)=>{
 productRouter.get('/api/product/:sku', async(req,res)=>{
     try {
         const {sku} = req.params;
-        const product = await Product.findOne({sku:sku}).select('-__v');
+        const product = await Product.findOne({sku:sku}).populate({path:'images', select:'imageUrl isMain' }).select('-__v');
         res.status(200).json({
             success: true,
             message: 'Product details retrieved successfully',

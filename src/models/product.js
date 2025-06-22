@@ -28,7 +28,7 @@ productSchema = mongoose.Schema({
     unit: {
         type: String ,
         enum : {
-            values: ['kg', 'number'],
+            values: ['kg', 'single'],
             message: '{VALUE} not supported'
         }
     },

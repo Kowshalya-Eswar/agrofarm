@@ -48,7 +48,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Use the cookie-parser middleware to parse cookies. This populates `req.cookies`.
 app.use(cookieParser());
-
 app.use("/", userRouter);
 app.use("/", productRouter);
 app.use("/", productImageRouter);

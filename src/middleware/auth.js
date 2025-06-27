@@ -45,7 +45,7 @@ const userAuth = async(req,res,next) => {
     } catch(err) {
         // If any error occurs during authentication (e.g., invalid token, token expired),
         // send a 400 Bad Request response with the error message.
-        res.status(400).send("ERROR:"+err.message)
+        //res.status(400).send("ERROR:"+err.message)
     }
 }
 

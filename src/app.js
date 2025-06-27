@@ -47,6 +47,7 @@ app.use(express.json());
 // `extended: true` allows for rich objects and arrays to be encoded into the URL-encoded format.
 app.use(express.urlencoded({ extended: true }));
 // Use the cookie-parser middleware to parse cookies. This populates `req.cookies`.
+app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 app.use(cookieParser());
 app.use("/", userRouter);
 app.use("/", productRouter);

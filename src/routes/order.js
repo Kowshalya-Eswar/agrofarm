@@ -5,7 +5,7 @@ const Order = require("../models/order");
 const Product = require("../models/product");
 const { userAuth, adminAuth } = require('../middleware/auth');
 const mongoose = require('mongoose');
-
+const sendEmail = require("../utils/sendEmail")
 /**
  * @route POST /api/orders
  * @description Creates a new order for the authenticated user.
@@ -71,7 +71,86 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         });
 
         await newOrder.save();
+        //const userEmail = req.user.email;
+        const userName = req.user.firstName + " " + req.user.lastName; 
 
+        // Convert orderItemsForDb into HTML table rows
+        let itemsHtml = orderItemsForDb.map(item => `
+            <tr>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.productNameAtOrder}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">${item.qty}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">₹${item.priceAtOrder.toFixed(2)}</td>
+                <td style="padding: 8px; border: 1px solid #ddd;">₹${(item.qty * item.priceAtOrder).toFixed(2)}</td>
+            </tr>
+        `).join('');
+
+        const emailSubject = `Order Confirmation #${newOrder._id}`; // Use order ID in subject
+        const emailHtmlBody = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; }
+                    .header { background-color: #f8f8f8; padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
+                    .header h1 { margin: 0; color: #4CAF50; }
+                    .content { padding: 20px 0; }
+                    .table-container { overflow-x: auto; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                    th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .footer { text-align: center; padding: 20px; border-top: 1px solid #eee; color: #777; font-size: 0.9em; }
+                    .button { display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Order Confirmed - Cocofields</h1>
+                    </div>
+                    <div class="content">
+                        <p>Hello ${userName},</p>
+                        <p>Thank you for your order with Cocofields! Your order #${newOrder._id} has been successfully placed and is being processed.</p>
+                        <p><strong>Order Summary:</strong></p>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${itemsHtml}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" style="text-align: right; font-weight: bold;">Grand Total:</td>
+                                        <td style="font-weight: bold;">₹${calculatedTotalAmount.toFixed(2)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <p><strong>Shipping Address:</strong></p>
+                        <p>${address}</p>
+                        <p>We will notify you once your order has been shipped.</p>
+                        <p>If you have any questions or require any changes to your order, please do not hesitate to contact us at <a href="mailto:support@cocofields.in">support@cocofields.in</a>.</p>
+                        <p>Thank you for choosing Cocofields!</p>
+                        <p style="text-align: center;">
+                            <a href="https://www.cocofields.in/orders-history" class="button">Check Orders</a>
+                        </p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; ${new Date().getFullYear()} Cocofields. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        const mailStatus = await sendEmail.run('Order Confirmed', emailHtmlBody);
+        console.log(mailStatus);
         res.status(201).json({
             message: "Order created successfully",
             success: true,

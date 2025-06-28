@@ -20,7 +20,8 @@ const connectDB = require("./config/database");
 const path = require('path'); // For serving static files
 const fs = require('fs');
 const cors = require('cors');
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = path.join(__dirname, '..', 'public/uploads');
+console.log(uploadsDir);
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
     console.log(`Created uploads directory at: ${uploadsDir}`);
@@ -47,7 +48,6 @@ app.use(express.json());
 // `extended: true` allows for rich objects and arrays to be encoded into the URL-encoded format.
 app.use(express.urlencoded({ extended: true }));
 // Use the cookie-parser middleware to parse cookies. This populates `req.cookies`.
-app.use('/uploads', express.static(path.join(__dirname, 'src/uploads')));
 app.use(cookieParser());
 app.use("/", userRouter);
 app.use("/", productRouter);

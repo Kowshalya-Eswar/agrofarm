@@ -202,7 +202,7 @@ productImageRouter.patch(
 
                 // 2. Delete the old image file from disk.
                 const oldFilename = path.basename(existingImage.imageUrl);
-                const oldFilePath = path.join(__dirname, '../uploads', oldFilename);
+                const oldFilePath = path.join(__dirname, '../../public/uploads', oldFilename);
 
                 if (fs.existsSync(oldFilePath) && oldFilename !== newUploadedFile.filename) { // Ensure not deleting newly uploaded file if somehow name matches
                     fs.unlinkSync(oldFilePath);

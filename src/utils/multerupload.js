@@ -7,7 +7,7 @@ const fs = require('fs');
 
 // Define the directory where uploaded files will be stored.
 // It creates an 'uploads' folder in the root of your project.
-const uploadsDir = path.join(__dirname, '../uploads');
+const uploadsDir = path.join(__dirname, '../..', 'public/uploads');
 
 // Ensure the 'uploads' directory exists. If not, create it synchronously.
 if (!fs.existsSync(uploadsDir)) {

@@ -22,7 +22,7 @@ const productImageSchema = mongoose.Schema({
 
 
 productImageSchema.pre('save', async function(next) {
-    if (this.isMain) {
+   if (this.isMain) {
         // If it is, update all other images associated with the same product SKU
         // to set their 'isMain' flag to false.
         // `this.constructor` refers to the ProductImage model itself.

@@ -1,20 +1,34 @@
 const mongoose = require("mongoose");
 
 const paymentSchema = mongoose.Schema({
+   userId: {
+        type: String,
+        ref: 'User',
+        required: true,
+        index: true
+    },
     order_id: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order',
         required: true,
-        index: true // Keep index for efficient lookup
+        index: true 
+    },
+    paymentService_order_id: {
+        type: String,
+        required: true,
+        index: true 
     },
     method: {
         type: String,
-        required: true,
         trim: true
     },
     transactionId: {
         type: String,
-        required: true,
+        unique: true,
+        trim: true
+    },
+    receipt: {
+        type: String,
         unique: true,
         trim: true
     },

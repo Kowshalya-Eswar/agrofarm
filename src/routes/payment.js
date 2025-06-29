@@ -5,6 +5,7 @@ const Payment = require("../models/payment");
 const Order = require("../models/order");
 const { userAuth, adminAuth } = require('../middleware/auth');
 const mongoose = require('mongoose');
+const razorpayInstance = require("../utils/razorpay");
 
 /**
  * @route POST /api/payments
@@ -15,12 +16,11 @@ const mongoose = require('mongoose');
  */
 paymentRouter.post('/api/payments', userAuth, async (req, res) => {
     try {
-        const { order_id, method, transactionId, amountPaid } = req.body;
-
-        if (!order_id || !method || !transactionId || amountPaid === undefined || amountPaid < 0) {
-            return sendErrorResponse(res, 400, "Missing required payment fields: order_id, method, transactionId, amountPaid.");
+        const { order_id, amount } = req.body;
+        const userId = req.user.userId;
+        if (!order_id || !userId || amount === undefined || amount < 0) {
+            return sendErrorResponse(res, 400, "Missing required payment fields: order_id, method, userId, amount.");
         }
-
         if (!mongoose.Types.ObjectId.isValid(order_id)) {
             return sendErrorResponse(res, 400, 'Invalid order ID format.');
         }
@@ -28,7 +28,19 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
         if (!order) {
             return sendErrorResponse(res, 404, `Order with ID '${order_id}' not found.`);
         }
-        const existingPayments = await Payment.find({order_id:order_id}).select('amountPaid');
+        const orderfromRazor = await razorpayInstance.orders.create({
+            "amount":amount,
+            "currency":"INR",
+            "receipt":"receipt#1",
+            "partial_payment":false,
+            "notes": {
+                firstname:"value3",
+            }
+        })
+       // res.json({orderfromRazor})
+        const {id:paymentService_order_id, amount:amountPaid, receipt} = orderfromRazor;
+
+        /*const existingPayments = await Payment.find({order_id:order_id}).select('amountPaid');
         var totalPaid        = existingPayments.reduce((sum, payment) =>{
            return sum+payment.amountPaid;
         },0);
@@ -36,13 +48,14 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
         let status = 'completed';
         if (order.totalAmount >= totalPaid) {
             status = 'partially paid'
-        }
+        }*/
         const newPayment = new Payment({
             order_id,
-            method,
-            transactionId,
+            paymentService_order_id,
+            receipt,
             amountPaid,
-            status: status
+            userId,
+            status: 'pending',
         });
 
         await newPayment.save();

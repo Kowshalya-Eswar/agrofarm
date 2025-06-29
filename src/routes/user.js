@@ -14,7 +14,7 @@ const sendEmail = require("../utils/sendEmail")
  * @access Public (though a `userAuth` middleware is typically used for protected routes, it's not here for registration).
  * @body {object} - Contains user details: firstName, lastName, email, userName, age, password, phone, gender.
  */
-userRouter.post("/api/user/register", async (req,res)=> {
+userRouter.post("/api/user/register", signupLimiter, async (req,res)=> {
     try {
         ValidateRegisterData(req);
         const {firstName, lastName, email, userName, age, password, phone, gender, role} = req.body;

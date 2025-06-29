@@ -1,7 +1,7 @@
 const sendErrorResponse = require("../utils/sendErrorResponse");
 const Payment = require("../models/payment");
 const razorpayInstance = require("../utils/razorpay");
-const createPayment = async(userId, amount) =>{
+const createPayment = async(userId, amount, firstName, lastName) =>{
     try {
             amount = amount * 100;
             if (!userId || amount === undefined || amount < 0) {
@@ -14,12 +14,13 @@ const createPayment = async(userId, amount) =>{
                 "receipt":receipt_no,
                 "partial_payment":false,
                 "notes": {
-                    firstname:"value3",
+                    firstName,
+                    lastName
                 }
             })
         
-            
-            const {id:order_id, amount:amountPaid, receipt, status} = orderfromRazor;
+            console.log(orderfromRazor);
+            const {id:order_id, amount:amountPaid, receipt, status, notes} = orderfromRazor;
 
             /*const existingPayments = await Payment.find({order_id:order_id}).select('amountPaid');
             var totalPaid        = existingPayments.reduce((sum, payment) =>{
@@ -35,9 +36,9 @@ const createPayment = async(userId, amount) =>{
                 receipt,
                 amountPaid,
                 userId,
-                status
+                status,
+                notes
             });
-
             await newPayment.save();
 
             return({

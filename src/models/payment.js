@@ -20,6 +20,9 @@ const paymentSchema = mongoose.Schema({
         type: String,
         trim: true
     },
+    notes: {
+        type:Object,
+    },
     receipt: {
         type: String,
         unique: true,

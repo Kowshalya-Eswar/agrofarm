@@ -51,10 +51,38 @@ const orderSchema = mongoose.Schema({
         required: true,
         min: 0
     },
-    address: {
-        type: String,
-        required: true,
-        trim: true
+    shippingAddress: { 
+        street: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        city: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        state: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        pincode: { 
+            type: String, 
+            required: true,
+            trim: true,
+        },
+        country: {
+            type: String,
+            trim: true,
+            default: 'India',
+        },
+        landmark: {
+            type:String,
+        }
+    },
+    deliveryDate: {
+        type: Date,
     },
     status: {
         type: String,

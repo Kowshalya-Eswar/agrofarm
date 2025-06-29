@@ -18,10 +18,10 @@ const createPayment = require("../utils/createPayment");
 orderRouter.post('/api/orders', userAuth, async (req, res) => {
      let orderItemsForDb = [];
     try {
-        const { items, address } = req.body;
+        const { items, shippingAddress } = req.body;
         const userId = req.user.userId;
 
-        if (!items || !Array.isArray(items) || items.length === 0 || !address) {
+        if (!items || !Array.isArray(items) || items.length === 0 || !shippingAddress) {
             return sendErrorResponse(res, 400, "Order must contain items and a shipping address.");
         }
 
@@ -62,7 +62,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
                 productNameAtOrder: product.productname
             });
         }
-        const result = await createPayment(userId, calculatedTotalAmount);
+        const result = await createPayment(userId, calculatedTotalAmount, req.user.firstName, req.user.lastName);
         if (!result.success) {
             const errorObj = result.err;
             const statusCode =  errorObj?.statusCode || 500;
@@ -79,7 +79,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             userId,
             items: orderItemsForDb,
             totalAmount: calculatedTotalAmount,
-            address,
+            shippingAddress,
             status: 'pending'
         });
 
@@ -168,7 +168,10 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         res.status(201).json({
             message: result.message,
             success: true,
-            data: result.data
+            data: {
+                ...result.data.toJSON(), 
+                key: process.env.RAZORPAY_KEY_ID,
+            }
         });
     } catch (err) {
         if (orderItemsForDb && orderItemsForDb.length > 0) {

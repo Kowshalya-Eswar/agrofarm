@@ -8,12 +8,6 @@ const paymentSchema = mongoose.Schema({
         index: true
     },
     order_id: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order',
-        required: true,
-        index: true 
-    },
-    paymentService_order_id: {
         type: String,
         required: true,
         index: true 
@@ -24,7 +18,6 @@ const paymentSchema = mongoose.Schema({
     },
     transactionId: {
         type: String,
-        unique: true,
         trim: true
     },
     receipt: {
@@ -34,8 +27,8 @@ const paymentSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'completed', 'failed', 'refunded', 'authorized','partially paid'],
-        default: 'pending',
+        enum: ['created'],
+        default: 'created',
         required: true
     },
     amountPaid: {

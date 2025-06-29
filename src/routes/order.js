@@ -5,7 +5,8 @@ const Order = require("../models/order");
 const Product = require("../models/product");
 const { userAuth, adminAuth } = require('../middleware/auth');
 const mongoose = require('mongoose');
-const sendEmail = require("../utils/sendEmail")
+const sendEmail = require("../utils/sendEmail");
+const createPayment = require("../utils/createPayment");
 /**
  * @route POST /api/orders
  * @description Creates a new order for the authenticated user.
@@ -61,18 +62,30 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
                 productNameAtOrder: product.productname
             });
         }
-
+        const result = await createPayment(userId, calculatedTotalAmount);
+        if (!result.success) {
+            const errorObj = result.err;
+            const statusCode =  errorObj?.statusCode || 500;
+            const description =  errorObj?.error?.description || 'internal server error';
+            res.status(statusCode).json({
+                status: false,
+                description
+            })
+            return;
+        }
+        const order_id = result.data.id;
         const newOrder = new Order({
-            userId: userId,
+            orderId: order_id,
+            userId,
             items: orderItemsForDb,
             totalAmount: calculatedTotalAmount,
-            address: address,
+            address,
             status: 'pending'
         });
 
         await newOrder.save();
         //const userEmail = req.user.email;
-        const userName = req.user.firstName + " " + req.user.lastName; 
+        /*const userName = req.user.firstName + " " + req.user.lastName; 
 
         // Convert orderItemsForDb into HTML table rows
         let itemsHtml = orderItemsForDb.map(item => `
@@ -84,7 +97,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             </tr>
         `).join('');
 
-        const emailSubject = `Order Confirmation #${newOrder._id}`; // Use order ID in subject
+       const emailSubject = `Order Confirmation #${newOrder._id}`; // Use order ID in subject
         const emailHtmlBody = `
             <!DOCTYPE html>
             <html>
@@ -150,13 +163,13 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             </html>
         `;
         const mailStatus = await sendEmail.run(emailSubject, emailHtmlBody);
-        console.log(mailStatus);
+        console.log(mailStatus);*/
+    
         res.status(201).json({
-            message: "Order created successfully",
+            message: result.message,
             success: true,
-            data: newOrder
+            data: result.data
         });
-
     } catch (err) {
         if (orderItemsForDb && orderItemsForDb.length > 0) {
             console.warn("Attempting to rollback stock due to order creation failure...");

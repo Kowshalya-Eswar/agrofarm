@@ -5,7 +5,6 @@ const Payment = require("../models/payment");
 const Order = require("../models/order");
 const { userAuth, adminAuth } = require('../middleware/auth');
 const mongoose = require('mongoose');
-const razorpayInstance = require("../utils/razorpay");
 
 /**
  * @route POST /api/payments
@@ -14,6 +13,7 @@ const razorpayInstance = require("../utils/razorpay");
  * @middleware userAuth
  * @body {object} - Contains payment details: `order_id` (string), `method` (string), `transactionId` (string), `amountPaid` (number).
  */
+/*
 paymentRouter.post('/api/payments', userAuth, async (req, res) => {
     try {
         const { order_id, amount } = req.body;
@@ -49,7 +49,7 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
         if (order.totalAmount >= totalPaid) {
             status = 'partially paid'
         }*/
-        const newPayment = new Payment({
+    /*    const newPayment = new Payment({
             order_id,
             paymentService_order_id,
             receipt,
@@ -79,7 +79,7 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
         sendErrorResponse(res, 500, "Failed to record payment due to an internal server error.", err);
     }
 });
-
+*/
 /**
  * @route GET /api/payments
  * @description Retrieves payment records. Admin can fetch all payments. Regular users can fetch their own payments.

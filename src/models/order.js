@@ -5,6 +5,11 @@ const mongoose = require("mongoose");
 
 // Define the schema for the Order model.
 const orderSchema = mongoose.Schema({
+    orderId: {
+        type: String,
+        required: true,
+        index: true
+    },
     userId: {
         type: String,
         ref: 'User',

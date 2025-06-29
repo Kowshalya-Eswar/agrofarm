@@ -149,7 +149,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             </body>
             </html>
         `;
-        const mailStatus = await sendEmail.run('Order Confirmed', emailHtmlBody);
+        const mailStatus = await sendEmail.run(emailSubject, emailHtmlBody);
         console.log(mailStatus);
         res.status(201).json({
             message: "Order created successfully",

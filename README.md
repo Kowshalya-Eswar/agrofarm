@@ -77,6 +77,14 @@ cookie-parser: Middleware to parse cookies.
 
 validator: For string validation and sanitization.
 
+Multer: Middleware for handling multipart/form-data, primarily used for file uploads (e.g., images) to the server.
+
+UUID: Generates universally unique identifiers (UUIDs) for distinct entities like users or orders.
+
+express-rate-limit: Express.js middleware to limit the rate of requests from specific IP addresses, preventing abuse and ensuring fair usage.
+
+AWS SDK (Amazon SES): Integrates with Amazon SES to send various types of transactional and notification emails from the application.
+
 ⚙️ Setup Instructions
 Prerequisites
 Node.js (LTS version recommended)
@@ -105,6 +113,12 @@ PORT: The port your Express server will run on.
 DATABASE_URL: Your MongoDB connection string.
 
 TOKEN_KEY: A strong, secret key for signing and verifying JWTs.
+
+AWS_ACCESS_KEY_ID: Your AWS access key ID, used by the AWS SDK to authenticate with services like SES.
+
+AWS_SECRET_ACCESS_KEY: Your AWS secret access key, used in conjunction with the access key ID for authenticating AWS service requests.
+
+ADMIN_EMAIL: The email address designated to receive notifications (e.g., order confirmations, new user registrations) from the application via SES.
 
 Admin Only
 

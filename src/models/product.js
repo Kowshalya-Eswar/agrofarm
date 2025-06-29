@@ -1,7 +1,5 @@
 
 const mongoose = require("mongoose");
-const productImageRouter = require("../routes/productImage");
-
 productSchema = mongoose.Schema({
     productname: {
         type: String,     
@@ -28,7 +26,7 @@ productSchema = mongoose.Schema({
     unit: {
         type: String ,
         enum : {
-            values: ['kg', 'single'],
+            values: ['kg', 'single', 'litre'],
             message: '{VALUE} not supported'
         }
     },

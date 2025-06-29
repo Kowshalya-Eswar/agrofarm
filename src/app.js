@@ -10,7 +10,7 @@ const shipmentRouter = require("./routes/shipment");
 const contactRouter = require("./routes/contact");
 // Import 'cookie-parser' middleware for parsing cookies attached to the client request object.
 const cookieParser = require("cookie-parser");
-
+const { globalLimiter } = require("./middleware/rateLimit");
 // Create an instance of the Express application.
 const app = express();
 const PORT = process.env.PORT || 7777;
@@ -26,7 +26,7 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
     console.log(`Created uploads directory at: ${uploadsDir}`);
 }
-app.use(express.urlencoded({ extended: true })); // for URL-encoded bodies
+app.use(globalLimiter)
 app.use('/uploads', express.static(uploadsDir)); // Serve static files from /uploads
 // Call the connectDB function to establish a connection to the database.
 // Use .then() for a successful connection and .catch() for connection errors.

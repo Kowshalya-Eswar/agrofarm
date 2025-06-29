@@ -5,6 +5,8 @@ const validator = require("validator");
 const User = require("../models/user.js");
 const ValidateRegisterData = require('../utils/validate');
 const {userAuth, adminAuth} = require('../middleware/auth');
+const { loginLimiter, signupLimiter } = require("../middleware/rateLimit");
+const sendEmail = require("../utils/sendEmail")
 
 /**
  * @route POST /api/user/register
@@ -20,6 +22,48 @@ userRouter.post("/api/user/register", async (req,res)=> {
             firstName, lastName, email, userName, password, age, phone, gender, role
         });
         await user.save();
+        const emailHtmlBody = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px; }
+                .header { background-color: #f8f8f8; padding: 15px; text-align: center; border-bottom: 1px solid #eee; }
+                .header h1 { margin: 0; color: #4CAF50; }
+                .content { padding: 20px 0; }
+                .footer { text-align: center; padding: 20px; border-top: 1px solid #eee; color: #777; font-size: 0.9em; }
+                .button { display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Welcome to Cocofields!</h1>
+                </div>
+                <div class="content">
+                    <p>Hello ${userName},</p>
+                    <p>Welcome to the Cocofields family! We're thrilled to have you join us.</p>
+                    <p>Your account has been successfully created. You can now explore our wide range of products and enjoy a seamless shopping experience.</p>
+
+                    <p>Start shopping now:</p>
+                    <p style="text-align: center;">
+                        <a href="https://www.cocofields.in" class="button">Go to Cocofields</a>
+                    </p>
+
+                    <p>If you have any questions, please don't hesitate to contact our support team at <a href="mailto:support@cocofields.in">support@cocofields.in</a>.</p>
+                    <p>Happy Shopping!</p>
+                    <p>The Cocofields Team</p>
+                </div>
+                <div class="footer">
+                    <p>&copy; ${new Date().getFullYear()} Cocofields. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+        const mailStatus = await sendEmail.run('Welcome to Cocofields!', emailHtmlBody);
+        console.log(mailStatus);
         res.status(200).json({
             message: "user added successfully",
             success: true
@@ -58,15 +102,15 @@ userRouter.post("/api/user/register", async (req,res)=> {
 /**
  * @route GET /api/users
  * @description Retrieves a list of users with optional pagination, filtering, and sorting.
- * @access Private (Admin Only) - Requires user authentication and admin privileges.
- * @middleware userAuth, adminAuth - Ensures only authenticated administrators can access this route.
+ * @access Private (Admin Only) - Requires user authentication privilages.
+ * @middleware userAuth - Ensures only authenticated administrators can access this route.
  * @query page {number} - The page number for pagination (default: 1).
  * @query limit {number} - The number of items per page (default: 10, maximum: 100).
  * @query search {string} - A search term to filter users by username or email (case-insensitive).
  * @query sortBy {string} - The field to sort the results by (e.g., 'username', 'createdAt').
  * @query order {string} - The sort order, 'asc' for ascending or 'desc' for descending (default: 'desc').
  */
-userRouter.get("/api/users", userAuth, adminAuth, async (req,res)=> {
+userRouter.get("/api/users", userAuth, async (req,res)=> {
     try {
         const { page = 1, limit = 10, search, sortBy = 'createdAt', order = 'desc' } = req.query;
         const pageNum = parseInt(page);
@@ -117,11 +161,11 @@ userRouter.get("/api/users", userAuth, adminAuth, async (req,res)=> {
 /**
  * @route GET /api/user/:emailId
  * @description Retrieves a single user by their email address.
- * @access Private (Admin Only) - Requires user authentication and admin privileges.
- * @middleware userAuth, adminAuth - Ensures only authenticated administrators can access this route.
+ * @access Private - Requires user authentication privilege.
+ * @middleware userAuth - Ensures only authenticated users can access this route.
  * @param {string} emailId - The email address of the user to retrieve (from URL parameters).
  */
-userRouter.get("/api/user/:emailId", userAuth,adminAuth, async(req,res)=> {
+userRouter.get("/api/user/:emailId", userAuth, async(req,res)=> {
     const {emailId} = req.params;
     try{
         user = await User.find({email: emailId}).select('-__v');
@@ -162,12 +206,12 @@ userRouter.delete("/api/user", userAuth, adminAuth, async(req,res)=> {
 /**
  * @route PATCH /api/user
  * @description Updates an existing user's information.
- * @access Private (Admin Only) - Requires user authentication and admin privileges.
- * @middleware userAuth, adminAuth - Ensures only authenticated administrators can access this route.
+ * @access Private - Requires user authentication privilege.
+ * @middleware userAuth - Ensures only authenticated administrators can access this route.
  * @body {object} - Contains the user's email (for identification) and fields to update (e.g., { "email": "user@example.com", "firstName": "NewName" }).
  * Allowed update fields are: firstName, lastName, gender, age, phone, role.
  */
-userRouter.patch("/api/user", userAuth, adminAuth, async(req,res)=>{
+userRouter.patch("/api/user", userAuth, async(req,res)=>{
     const data = req.body;
     const ALLOWED_UPDATES = ["firstName","lastName","gender","age","phone","role"];
     const isUpdateAllowed = Object.keys(data).every((k) =>
@@ -200,7 +244,7 @@ userRouter.patch("/api/user", userAuth, adminAuth, async(req,res)=>{
  * @access Public - Does not require authentication.
  * @body {object} - Contains user credentials: { "email": "user@example.com", "password": "yourpassword" }.
  */
-userRouter.post("/api/login", async(req,res)=>{
+userRouter.post("/api/login", loginLimiter, async(req,res)=>{
     try {
         const {password, email} = req.body;
         if (!validator.isEmail(email)) {

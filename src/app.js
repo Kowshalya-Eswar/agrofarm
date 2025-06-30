@@ -1,5 +1,6 @@
 
 require('dotenv').config();
+const bodyParser = require('body-parser');
 const express = require("express");
 const userRouter = require("./routes/user");
 const productRouter = require("./routes/product");
@@ -26,7 +27,13 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
     console.log(`Created uploads directory at: ${uploadsDir}`);
 }
-app.use(globalLimiter)
+app.set('trust proxy', true);
+app.use(globalLimiter);
+app.use(bodyParser.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use('/uploads', express.static(uploadsDir)); // Serve static files from /uploads
 // Call the connectDB function to establish a connection to the database.
 // Use .then() for a successful connection and .catch() for connection errors.

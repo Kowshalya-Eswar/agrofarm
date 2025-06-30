@@ -6,6 +6,7 @@ const Order = require("../models/order");
 const { userAuth, adminAuth } = require('../middleware/auth');
 const { validateWebhookSignature} = require('razorpay/dist/utils/razorpay-utils');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 
 /**
  * @route POST /api/payments
@@ -160,15 +161,22 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
  **/
 paymentRouter.post("/api/payment/hook", async(req, res) =>{
     try {
-        const webhookSignature = req.get("X-Razorpay-Signature");
-        const isWebhookValid = validateWebhookSignature(JSON.stringify(req.body), 
+        const webhookSignature = req.headers["X-Razorpay-Signature"];
+         const expectedSignature = crypto.createHmac('sha256', secret)
+        .update(req.rawBody)
+        .digest('hex');
+       /* const isWebhookValid = validateWebhookSignature(JSON.stringify(req.body), 
         webhookSignature,
         process.env.RAZORPAY_WEBHOOK_SECRET);
 
         if (!isWebhookValid) {
             return sendErrorResponse(res, 400, "webhook signature is invalid");
-        }
+        } */
 
+        if (expectedSignature !== signature) {
+             return sendErrorResponse(res, 400, "webhook signature is invalid");
+        }
+       
         const paymentDetails = req.body.payload.payment.entity;
         const payment = await Payment.findOne({ orderId: paymentDetails.orderId});
         payment.status = paymentDetails.status;
@@ -181,6 +189,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
             order.status = "failed";
         }
         await order.save();
+        console.log("order updated");
         return res.status(200).json({ msg: "webhook received successfully" });
 
     } catch (err) {

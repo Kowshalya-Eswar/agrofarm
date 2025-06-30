@@ -27,8 +27,8 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
     console.log(`Created uploads directory at: ${uploadsDir}`);
 }
-app.set('trust proxy', true);
-app.use(globalLimiter);
+//app.set('trust proxy', true);
+//app.use(globalLimiter);
 app.use(bodyParser.json({
   verify: (req, res, buf) => {
     req.rawBody = buf;

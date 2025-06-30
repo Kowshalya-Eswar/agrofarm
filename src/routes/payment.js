@@ -162,7 +162,7 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
 paymentRouter.post("/api/payment/hook", async(req, res) =>{
     try {
         const webhookSignature = req.headers["X-Razorpay-Signature"];
-         const expectedSignature = crypto.createHmac('sha256', secret)
+         const expectedSignature = crypto.createHmac('sha256',  process.env.RAZORPAY_WEBHOOK_SECRET)
         .update(req.rawBody)
         .digest('hex');
        /* const isWebhookValid = validateWebhookSignature(JSON.stringify(req.body), 

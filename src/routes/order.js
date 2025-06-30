@@ -169,7 +169,6 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             </html>
         `;
         const mailStatus = await sendEmail.run(emailSubject, emailHtmlBody);
-        console.log(mailStatus);
     
         res.status(201).json({
             message: result.message,

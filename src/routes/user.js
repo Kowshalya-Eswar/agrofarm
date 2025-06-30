@@ -63,7 +63,6 @@ userRouter.post("/api/user/register", signupLimiter, async (req,res)=> {
         </html>
         `;
         const mailStatus = await sendEmail.run('Welcome to Cocofields!', emailHtmlBody);
-        console.log(mailStatus);
         res.status(200).json({
             message: "user added successfully",
             success: true

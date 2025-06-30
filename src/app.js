@@ -21,7 +21,7 @@ const path = require('path'); // For serving static files
 const fs = require('fs');
 const cors = require('cors');
 const uploadsDir = path.join(__dirname, '..', 'public/uploads');
-console.log(uploadsDir);
+
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
     console.log(`Created uploads directory at: ${uploadsDir}`);

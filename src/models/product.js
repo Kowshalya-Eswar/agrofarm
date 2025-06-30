@@ -53,10 +53,9 @@ productSchema.pre('save', function(next) {
     try {
         if (this.isNew) {
             this.sku = 'prod-'+generateRandomSKU(10);
-            console.log(this.sku);
         }
     } catch(err) {
-        console.log(err.message);
+
     }
     next();
 

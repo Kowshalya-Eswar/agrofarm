@@ -19,7 +19,6 @@ const createPayment = async(userId, amount, firstName, lastName) =>{
                 }
             })
         
-            console.log(orderfromRazor);
             const {id:orderId, amount:amountPaid, receipt, status, notes} = orderfromRazor;
 
             /*const existingPayments = await Payment.find({orderId:orderId}).select('amountPaid');
@@ -48,7 +47,6 @@ const createPayment = async(userId, amount, firstName, lastName) =>{
             });
 
     } catch (err) {
-        console.log(err);
        return({
           err: err,
           success: false

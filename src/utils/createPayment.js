@@ -20,9 +20,9 @@ const createPayment = async(userId, amount, firstName, lastName) =>{
             })
         
             console.log(orderfromRazor);
-            const {id:order_id, amount:amountPaid, receipt, status, notes} = orderfromRazor;
+            const {id:orderId, amount:amountPaid, receipt, status, notes} = orderfromRazor;
 
-            /*const existingPayments = await Payment.find({order_id:order_id}).select('amountPaid');
+            /*const existingPayments = await Payment.find({orderId:orderId}).select('amountPaid');
             var totalPaid        = existingPayments.reduce((sum, payment) =>{
             return sum+payment.amountPaid;
             },0);
@@ -32,7 +32,7 @@ const createPayment = async(userId, amount, firstName, lastName) =>{
                 status = 'partially paid'
             }*/
             const newPayment = new Payment({
-                order_id,
+                orderId,
                 receipt,
                 amountPaid,
                 userId,

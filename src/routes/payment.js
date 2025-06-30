@@ -4,6 +4,7 @@ const sendErrorResponse = require("../utils/sendErrorResponse");
 const Payment = require("../models/payment");
 const Order = require("../models/order");
 const { userAuth, adminAuth } = require('../middleware/auth');
+const { validateWebhookSignature} = require('razorpay/dist/utils/razorpay-utils');
 const mongoose = require('mongoose');
 
 /**
@@ -11,22 +12,22 @@ const mongoose = require('mongoose');
  * @description Creates a new payment record for an order.
  * @access Private (Authenticated User/Admin) - A user might create their own payment, admin can too.
  * @middleware userAuth
- * @body {object} - Contains payment details: `order_id` (string), `method` (string), `transactionId` (string), `amountPaid` (number).
+ * @body {object} - Contains payment details: `orderId` (string), `method` (string), `transactionId` (string), `amountPaid` (number).
  */
 /*
 paymentRouter.post('/api/payments', userAuth, async (req, res) => {
     try {
-        const { order_id, amount } = req.body;
+        const { orderId, amount } = req.body;
         const userId = req.user.userId;
-        if (!order_id || !userId || amount === undefined || amount < 0) {
-            return sendErrorResponse(res, 400, "Missing required payment fields: order_id, method, userId, amount.");
+        if (!orderId || !userId || amount === undefined || amount < 0) {
+            return sendErrorResponse(res, 400, "Missing required payment fields: orderId, method, userId, amount.");
         }
-        if (!mongoose.Types.ObjectId.isValid(order_id)) {
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
             return sendErrorResponse(res, 400, 'Invalid order ID format.');
         }
-        const order = await Order.findById(order_id).select('totalAmount status');
+        const order = await Order.findById(orderId).select('totalAmount status');
         if (!order) {
-            return sendErrorResponse(res, 404, `Order with ID '${order_id}' not found.`);
+            return sendErrorResponse(res, 404, `Order with ID '${orderId}' not found.`);
         }
         const orderfromRazor = await razorpayInstance.orders.create({
             "amount":amount,
@@ -38,9 +39,9 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
             }
         })
        // res.json({orderfromRazor})
-        const {id:paymentService_order_id, amount:amountPaid, receipt} = orderfromRazor;
+        const {id:paymentService_orderId, amount:amountPaid, receipt} = orderfromRazor;
 
-        /*const existingPayments = await Payment.find({order_id:order_id}).select('amountPaid');
+        /*const existingPayments = await Payment.find({orderId:orderId}).select('amountPaid');
         var totalPaid        = existingPayments.reduce((sum, payment) =>{
            return sum+payment.amountPaid;
         },0);
@@ -50,8 +51,8 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
             status = 'partially paid'
         }*/
     /*    const newPayment = new Payment({
-            order_id,
-            paymentService_order_id,
+            orderId,
+            paymentService_orderId,
             receipt,
             amountPaid,
             userId,
@@ -60,7 +61,7 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
 
         await newPayment.save();
 
-        await Order.findByIdAndUpdate(order_id, { status: 'processing' });
+        await Order.findByIdAndUpdate(orderId, { status: 'processing' });
 
         res.status(201).json({
             message: "Payment recorded successfully",
@@ -83,15 +84,15 @@ paymentRouter.post('/api/payments', userAuth, async (req, res) => {
 /**
  * @route GET /api/payments
  * @description Retrieves payment records. Admin can fetch all payments. Regular users can fetch their own payments.
- * Can filter payments by `order_id` or `transactionId` using query parameters.
+ * Can filter payments by `orderId` or `transactionId` using query parameters.
  * @access Private (Authenticated User/Admin)
  * @middleware userAuth
- * @query order_id {string} - Optional. The MongoDB _id of the order to filter payments by.
+ * @query orderId {string} - Optional. The MongoDB _id of the order to filter payments by.
  * @query transactionId {string} - Optional. The unique identifier of a payment transaction to filter by.
  */
 paymentRouter.get('/api/payments', userAuth, async (req, res) => {
     try {
-        const {order_id, transactionId} = req.query;
+        const {orderId, transactionId} = req.query;
         const isAdmin = req.user.role.includes('admin');
         let queryFilter = {};
         if (!isAdmin) {
@@ -102,17 +103,17 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
                     status: true
                 })
             }
-            const userorderIds = userOrders.map(order => order.order_id);
-            queryFilter.order_id = {$in:userorderIds}
+            const userorderIds = userOrders.map(order => order.orderId);
+            queryFilter.orderId = {$in:userorderIds}
         }
-        if (order_id) {
-            if (!mongoose.Types.ObjectId.isValid(order_id)) {
+        if (orderId) {
+            if (!mongoose.Types.ObjectId.isValid(orderId)) {
                 return sendErrorResponse(res,404,'invalid order id');
             }
-            queryFilter.order_id = order_id;
+            queryFilter.orderId = orderId;
             if(!isAdmin) {
-                //check if any of the order_id in query filter has  order_id got in request
-                if(!queryFilter.order_id.$in.some(id => id.equals(order_id))) {
+                //check if any of the orderId in query filter has  orderId got in request
+                if(!queryFilter.orderId.$in.some(id => id.equals(orderId))) {
                      res.status(200).json({
                         message: 'The order not found',
                         status: true
@@ -127,16 +128,16 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
         let message = "Payments retrieved successfully";
         if (transactionId) {
             message = `Payment${payments.length !== 1 ? 's' : ''} retrieved successfully for transaction ID '${transactionId}'`;
-        } else if (order_id) {
-            message = `Payments retrieved successfully for order ID '${order_id}'`;
+        } else if (orderId) {
+            message = `Payments retrieved successfully for order ID '${orderId}'`;
         } else if (!isAdmin) {
             message = "Your payments retrieved successfully";
         } else {
             message = "All payments retrieved successfully (Admin)";
         }
 
-        if (payments.length === 0 && (order_id || transactionId || !isAdmin)) {
-            // Return 404 only if a specific filter was applied (order_id or transactionId)
+        if (payments.length === 0 && (orderId || transactionId || !isAdmin)) {
+            // Return 404 only if a specific filter was applied (orderId or transactionId)
             // or if it's a non-admin request with no payments found.
             // If it's an admin requesting all payments and none exist, it returns 200 with an empty array.
             return sendErrorResponse(res, 404, `No payments found matching the criteria.`);
@@ -151,6 +152,42 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
         sendErrorResponse(res, 500, "Failed to retrieve payments.", err);
     }
 });
+
+/**
+ * @route   POST /api/payment/hook
+ * @desc    Razorpay Webhook Handler - Handles payment status updates from Razorpay
+ * @access  Public (should be protected by signature verification) 
+ **/
+paymentRouter.post("/api/payment/hook", async(req, res) =>{
+    try {
+        const isWebhookValid = req.get["X-Razorpay-Signature"];
+        validateWebhookSignature(JSON.stringify(req.body), 
+        webhookSignature,
+        process.env.RAZORPAY_WEBHOOK_SECRET);
+
+        if (!isWebhookValid) {
+            return sendErrorResponse(res, 400, "webhook signature is invalid");
+        }
+
+        const paymentDetails = req.body.payload.payment.entity;
+        const payment = await Payment.findOne({ orderId: paymentDetails.orderId});
+        payment.status = paymentDetails.status;
+        await payment.save();
+        const order = await Order.findOne({orderId:paymentDetails.orderId})
+        if (req.body.event == "payment.captured") {
+            order.status = "processing";
+        }
+        if (req.body.event == "payment.failed") {
+            order.status = "failed";
+        }
+        await order.save();
+        return res.status(200).json({ msg: "webhook received successfully" });
+
+    } catch (err) {
+        console.error("Error in webhook handler:", err);
+        return res.status(500).json({ msg: err.message });
+    }
+})
 
 /**
  * @route PATCH /api/payments/:transactionId/status
@@ -181,9 +218,9 @@ paymentRouter.patch('/api/payments/:transactionId/status', userAuth, adminAuth, 
         }
 
         if (updatedPayment.status === 'completed') {
-            await Order.findByIdAndUpdate(updatedPayment.order_id, { status: 'processing' });
+            await Order.findByIdAndUpdate(updatedPayment.orderId, { status: 'processing' });
         } else if (updatedPayment.status === 'failed' || updatedPayment.status === 'refunded') {
-            await Order.findByIdAndUpdate(updatedPayment.order_id, { status: 'cancelled' });
+            await Order.findByIdAndUpdate(updatedPayment.orderId, { status: 'cancelled' });
         }
 
 

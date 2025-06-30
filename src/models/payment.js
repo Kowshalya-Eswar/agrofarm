@@ -7,7 +7,7 @@ const paymentSchema = mongoose.Schema({
         required: true,
         index: true
     },
-    order_id: {
+    orderId: {
         type: String,
         required: true,
         index: true 
@@ -30,7 +30,7 @@ const paymentSchema = mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['created'],
+        enum: ['created', 'captured', 'failed'],
         default: 'created',
         required: true
     },

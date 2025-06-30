@@ -11,28 +11,28 @@ const mongoose = require('mongoose');
  * @description Creates a new shipment record for an order.
  * @access Private (Admin Only) - Typically only admins or fulfillment systems create shipments.
  * @middleware userAuth, adminAuth
- * @body {object} - Contains shipment details: `order_id` (string), `carrier` (string), `trackingNumber` (string), `origin` (string), `destination` (string).
+ * @body {object} - Contains shipment details: `orderId` (string), `carrier` (string), `trackingNumber` (string), `origin` (string), `destination` (string).
  */
 shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
     try {
-        const { order_id, carrier, trackingNumber, origin, destination } = req.body;
+        const { orderId, carrier, trackingNumber, origin, destination } = req.body;
 
-        if (!order_id || !carrier || !trackingNumber || !origin || !destination) {
+        if (!orderId || !carrier || !trackingNumber || !origin || !destination) {
             return sendErrorResponse(res, 400, "Missing required shipment fields.");
         }
 
-        if (!mongoose.Types.ObjectId.isValid(order_id)) {
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
             return sendErrorResponse(res, 400, 'Invalid order ID format.');
         }
 
         // Check if the order exists
-        const order = await Order.findById(order_id);
+        const order = await Order.findById(orderId);
         if (!order) {
-            return sendErrorResponse(res, 404, `Order with ID '${order_id}' not found.`);
+            return sendErrorResponse(res, 404, `Order with ID '${orderId}' not found.`);
         }
 
         const newShipment = new Shipment({
-            order_id,
+            orderId,
             carrier,
             trackingNumber,
             origin,
@@ -44,7 +44,7 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
         await newShipment.save();
 
         // Optional: Update the associated order's status to 'shipped' if that's your workflow
-        await Order.findByIdAndUpdate(order_id, { status: 'shipped' });
+        await Order.findByIdAndUpdate(orderId, { status: 'shipped' });
 
         res.status(201).json({
             message: "Shipment created successfully",
@@ -53,7 +53,7 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
         });
 
     } catch (err) {
-        if (err.code === 11000) { // Duplicate key error (e.g., trackingNumber or order_id unique)
+        if (err.code === 11000) { // Duplicate key error (e.g., trackingNumber or orderId unique)
             return sendErrorResponse(res, 409, 'Shipment with this tracking number or for this order already exists.', err);
         }
         if (err.name === 'ValidationError') {
@@ -67,15 +67,15 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
 /**
  * @route GET /api/shipments
  * @description Retrieves shipment records. Admin can fetch all shipments. Regular users can fetch shipments for their own orders.
- * Can filter shipments by `order_id` or `trackingNumber` using query parameters.
+ * Can filter shipments by `orderId` or `trackingNumber` using query parameters.
  * @access Private (Authenticated User/Admin)
  * @middleware userAuth
- * @query order_id {string} - Optional. The MongoDB _id of the order to filter shipments by.
+ * @query orderId {string} - Optional. The MongoDB _id of the order to filter shipments by.
  * @query trackingNumber {string} - Optional. The unique tracking number to filter by.
  */
 shipmentRouter.get('/api/shipments', userAuth, async (req, res) => {
     try {
-        const { order_id, trackingNumber } = req.query;
+        const { orderId, trackingNumber } = req.query;
         const isAdmin = req.user.role.includes('admin');
         const currentUserId = req.user.userId;
 
@@ -93,17 +93,17 @@ shipmentRouter.get('/api/shipments', userAuth, async (req, res) => {
                     data: []
                 });
             }
-            queryFilter.order_id = { $in: userOrderIds };
+            queryFilter.orderId = { $in: userOrderIds };
         }
 
-        // Apply optional order_id filter
-        if (order_id) {
-            if (!mongoose.Types.ObjectId.isValid(order_id)) {
+        // Apply optional orderId filter
+        if (orderId) {
+            if (!mongoose.Types.ObjectId.isValid(orderId)) {
                 return sendErrorResponse(res, 400, 'Invalid order ID format in query parameter.');
             }
-            queryFilter.order_id = order_id;
+            queryFilter.orderId = orderId;
             if (!isAdmin) {
-                if (!queryFilter.order_id.$in.some(id => id.equals(order_id))) {
+                if (!queryFilter.orderId.$in.some(id => id.equals(orderId))) {
                     return sendErrorResponse(res, 403, 'Unauthorized to view shipments for this order ID.');
                 }   
             }
@@ -119,15 +119,15 @@ shipmentRouter.get('/api/shipments', userAuth, async (req, res) => {
         let message = "Shipments retrieved successfully";
         if (trackingNumber) {
             message = `Shipment${shipments.length !== 1 ? 's' : ''} retrieved successfully for tracking number '${trackingNumber}'`;
-        } else if (order_id) {
-            message = `Shipments retrieved successfully for order ID '${order_id}'`;
+        } else if (orderId) {
+            message = `Shipments retrieved successfully for order ID '${orderId}'`;
         } else if (!isAdmin) {
             message = "Your shipments retrieved successfully";
         } else {
             message = "All shipments retrieved successfully (Admin)";
         }
 
-        if (shipments.length === 0 && (order_id || trackingNumber || !isAdmin)) {
+        if (shipments.length === 0 && (orderId || trackingNumber || !isAdmin)) {
             return sendErrorResponse(res, 404, `No shipments found matching the criteria.`);
         }
 
@@ -162,7 +162,7 @@ shipmentRouter.get('/api/shipments/:trackingNumber', userAuth, async (req, res) 
 
         // Authorization check: If not admin, ensure the shipment belongs to user's order
         if (!isAdmin) {
-            const order = await Order.findById(shipment.order_id).select('userId');
+            const order = await Order.findById(shipment.orderId).select('userId');
             if (!order || order.userId.toString() !== currentUserId.toString()) {
                 return sendErrorResponse(res, 403, 'Unauthorized to view this shipment.');
             }
@@ -208,9 +208,9 @@ shipmentRouter.patch('/api/shipments/:trackingNumber/status', userAuth, adminAut
 
         // Optional: Update associated order status if shipment is delivered
         if (updatedShipment.status === 'delivered') {
-            await Order.findByIdAndUpdate(updatedShipment.order_id, { status: 'delivered' });
+            await Order.findByIdAndUpdate(updatedShipment.orderId, { status: 'delivered' });
         } else if (updatedShipment.status === 'failed' || updatedShipment.status === 'returned') {
-            await Order.findByIdAndUpdate(updatedShipment.order_id, { status: 'problem' }); // Or a custom 'shipment_failed' status
+            await Order.findByIdAndUpdate(updatedShipment.orderId, { status: 'problem' }); // Or a custom 'shipment_failed' status
         }
 
 

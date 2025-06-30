@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const shipmentSchema = mongoose.Schema({
-    order_id: {
+    orderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order',
         required: true,

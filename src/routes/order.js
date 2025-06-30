@@ -73,9 +73,9 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             })
             return;
         }
-        const order_id = result.data.id;
+  
         const newOrder = new Order({
-            orderId: order_id,
+            orderId: result.data.orderId,
             userId,
             items: orderItemsForDb,
             totalAmount: calculatedTotalAmount,
@@ -84,8 +84,8 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         });
 
         await newOrder.save();
-        //const userEmail = req.user.email;
-        /*const userName = req.user.firstName + " " + req.user.lastName; 
+        const userEmail = req.user.email;
+        const userName = req.user.firstName + " " + req.user.lastName; 
 
         // Convert orderItemsForDb into HTML table rows
         let itemsHtml = orderItemsForDb.map(item => `
@@ -147,7 +147,13 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
                             </table>
                         </div>
                         <p><strong>Shipping Address:</strong></p>
-                        <p>${address}</p>
+                        <ul style ="list-style-type: none; padding-left: 0; margin: 0;">
+                        <li>${shippingAddress.street} </li>
+                        <li>${shippingAddress.city} </li>
+                        <li>${shippingAddress.state} </li>
+                        <li>${shippingAddress.pincode} </li>
+                        <li>${shippingAddress.country} </li>
+                        </ul>
                         <p>We will notify you once your order has been shipped.</p>
                         <p>If you have any questions or require any changes to your order, please do not hesitate to contact us at <a href="mailto:support@cocofields.in">support@cocofields.in</a>.</p>
                         <p>Thank you for choosing Cocofields!</p>
@@ -163,7 +169,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             </html>
         `;
         const mailStatus = await sendEmail.run(emailSubject, emailHtmlBody);
-        console.log(mailStatus);*/
+        console.log(mailStatus);
     
         res.status(201).json({
             message: result.message,

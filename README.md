@@ -32,7 +32,7 @@ Record multiple payments for a single order.
 
 Payment status (completed, partially paid) determined by total amount paid against order total.
 
-Retrieve payments (admin can see all, regular users see their own; filter by order_id or transactionId).
+Retrieve payments (admin can see all, regular users see their own; filter by orderId or transactionId).
 
 Admin functionality: Update payment status.
 
@@ -40,7 +40,7 @@ Shipment Management:
 
 Admin functionality: Create new shipment records.
 
-Retrieve shipment records (admin can see all, regular users see their own orders' shipments; filter by order_id or trackingNumber).
+Retrieve shipment records (admin can see all, regular users see their own orders' shipments; filter by orderId or trackingNumber).
 
 Retrieve a single shipment by tracking number (user/admin).
 
@@ -85,6 +85,8 @@ express-rate-limit: Express.js middleware to limit the rate of requests from spe
 
 AWS SDK (Amazon SES): Integrates with Amazon SES to send various types of transactional and notification emails from the application.
 
+razorpay : used to integrate RazorPay payment gateway to process the payment when user proceeds to checkout
+
 ⚙️ Setup Instructions
 Prerequisites
 Node.js (LTS version recommended)
@@ -119,6 +121,12 @@ AWS_ACCESS_KEY_ID: Your AWS access key ID, used by the AWS SDK to authenticate w
 AWS_SECRET_ACCESS_KEY: Your AWS secret access key, used in conjunction with the access key ID for authenticating AWS service requests.
 
 ADMIN_EMAIL: The email address designated to receive notifications (e.g., order confirmations, new user registrations) from the application via SES.
+
+RAZORPAY_KEY_ID : Your Razorpay key id, used for creating and making payments
+
+RAZORPAY_KEY_SECRET = Your Razorpay secret key, used for creating and making payments
+
+RAZORPAY_WEBHOOK_SECRET = Your RazorPay webhook secret used to handle the webhook response
 
 Admin Only
 

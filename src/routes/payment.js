@@ -9,80 +9,6 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 /**
- * @route POST /api/payments
- * @description Creates a new payment record for an order.
- * @access Private (Authenticated User/Admin) - A user might create their own payment, admin can too.
- * @middleware userAuth
- * @body {object} - Contains payment details: `orderId` (string), `method` (string), `transactionId` (string), `amountPaid` (number).
- */
-/*
-paymentRouter.post('/api/payments', userAuth, async (req, res) => {
-    try {
-        const { orderId, amount } = req.body;
-        const userId = req.user.userId;
-        if (!orderId || !userId || amount === undefined || amount < 0) {
-            return sendErrorResponse(res, 400, "Missing required payment fields: orderId, method, userId, amount.");
-        }
-        if (!mongoose.Types.ObjectId.isValid(orderId)) {
-            return sendErrorResponse(res, 400, 'Invalid order ID format.');
-        }
-        const order = await Order.findById(orderId).select('totalAmount status');
-        if (!order) {
-            return sendErrorResponse(res, 404, `Order with ID '${orderId}' not found.`);
-        }
-        const orderfromRazor = await razorpayInstance.orders.create({
-            "amount":amount,
-            "currency":"INR",
-            "receipt":"receipt#1",
-            "partial_payment":false,
-            "notes": {
-                firstname:"value3",
-            }
-        })
-       // res.json({orderfromRazor})
-        const {id:paymentService_orderId, amount:amountPaid, receipt} = orderfromRazor;
-
-        /*const existingPayments = await Payment.find({orderId:orderId}).select('amountPaid');
-        var totalPaid        = existingPayments.reduce((sum, payment) =>{
-           return sum+payment.amountPaid;
-        },0);
-        totalPaid += amountPaid;
-        let status = 'completed';
-        if (order.totalAmount >= totalPaid) {
-            status = 'partially paid'
-        }*/
-    /*    const newPayment = new Payment({
-            orderId,
-            paymentService_orderId,
-            receipt,
-            amountPaid,
-            userId,
-            status: 'pending',
-        });
-
-        await newPayment.save();
-
-        await Order.findByIdAndUpdate(orderId, { status: 'processing' });
-
-        res.status(201).json({
-            message: "Payment recorded successfully",
-            success: true,
-            data: newPayment
-        });
-
-    } catch (err) {
-        if (err.code === 11000) {
-            return sendErrorResponse(res, 409, 'Payment with this transaction ID or for this order already exists.', err);
-        }
-        if (err.name === 'ValidationError') {
-            const errors = Object.keys(err.errors).map(key => err.errors[key].message);
-            return sendErrorResponse(res, 400, `Payment validation failed: ${errors.join(', ')}`, err);
-        }
-        sendErrorResponse(res, 500, "Failed to record payment due to an internal server error.", err);
-    }
-});
-*/
-/**
  * @route GET /api/payments
  * @description Retrieves payment records. Admin can fetch all payments. Regular users can fetch their own payments.
  * Can filter payments by `orderId` or `transactionId` using query parameters.
@@ -170,7 +96,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
         process.env.RAZORPAY_WEBHOOK_SECRET);
 
         if (!isWebhookValid) {
-            return sendErrorResponse(res, 400, "webhook signature is invalid");
+            return sendErrorResponse(res, 400, "webhook signature is inv");
         } 
 
        /* if (expectedSignature !== webhookSignature) {

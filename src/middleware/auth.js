@@ -17,9 +17,9 @@ const userAuth = async(req,res,next) => {
         const { token } = req.cookies;
         // If no token is found in the cookies, throw an error indicating the user is not found/authenticated.
         if (!token) {
-            res.status(401).json({
+            res.status(200).json({
                 status: false,
-                message: "please login"
+                message: "user not logged in"
             })
         }
         // Verify the token using the secret key from environment variables (process.env.TOKEN_KEY).

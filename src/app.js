@@ -1,5 +1,6 @@
 
 require('dotenv').config();
+
 const express = require("express");
 const userRouter = require("./routes/user");
 const productRouter = require("./routes/product");
@@ -16,6 +17,7 @@ const app = express();
 const PORT = process.env.PORT || 7777;
 const connectDB = require("./config/database");
 
+require('./cron/stockScheduler');
 
 const path = require('path'); // For serving static files
 const fs = require('fs');

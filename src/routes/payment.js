@@ -96,7 +96,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
         process.env.RAZORPAY_WEBHOOK_SECRET);
 
         if (!isWebhookValid) {
-            return sendErrorResponse(res, 400, "webhook signature is inv");
+            return sendErrorResponse(res, 400, "webhook signature is invalid");
         } 
 
        /* if (expectedSignature !== webhookSignature) {

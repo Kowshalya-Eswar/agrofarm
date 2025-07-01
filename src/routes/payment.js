@@ -174,7 +174,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
         } */
 
         if (expectedSignature !== webhookSignature) {
-             return sendErrorResponse(res, 400, "webhook signature is invalid");
+             return sendErrorResponse(res, 404, "webhook signature is invalid");
         }
        
         const paymentDetails = req.body.payload.payment.entity;

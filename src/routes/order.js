@@ -207,7 +207,7 @@ orderRouter.get('/api/orders', userAuth, adminAuth, async (req, res) => {
             // CORRECTED POPULATE: Use foreignField to match Order.userId with User.userId
             .populate({ path: 'userId', model: 'User', select: 'userName email userId -_id', foreignField: 'userId' })
             .select('-__v -_id')
-            .sort({ createdAt: -1 });
+            .sort({ 'createdAt': -1 });
 
         if (orders.length === 0) {
             return sendErrorResponse(res, 404, "No orders found.");

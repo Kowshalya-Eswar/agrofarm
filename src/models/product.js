@@ -1,5 +1,7 @@
 
 const mongoose = require("mongoose");
+const redis = require('../utils/redisConnect');
+const getStockKey = (productId) => `stock:${productId}`;
 productSchema = mongoose.Schema({
     productname: {
         type: String,     
@@ -49,17 +51,61 @@ function generateRandomSKU(length = 8) {
     return result;
 }
 
-productSchema.pre('save', function(next) {
-    try {
-        if (this.isNew) {
-            this.sku = 'prod-'+generateRandomSKU(10);
-        }
-    } catch(err) {
-
+productSchema.pre('save', async function (next) {
+  try {
+    if (this.isNew) {
+      this.sku = 'prod-' + generateRandomSKU(10);
+      await redis.set(getStockKey(this._id), this.stock); // use `this`, not `doc`
     }
     next();
+  } catch (err) {
+    console.error('Error in pre-save:', err);
+    next(err); // pass error to Mongoose
+  }
+});
 
-})
+productSchema.post('findOneAndDelete', async function (doc) {
+  if (doc) {
+    try {
+      await redis.del(getStockKey(doc._id));
+    } catch (err) {
+      console.error('❌ Redis delete failed:', err);
+    }
+  }
+});
+
+// After stock is updated via findOneAndUpdate
+productSchema.post('findOneAndUpdate', async function (doc) {
+  try {
+    if (!doc) return;
+
+    // Get update object
+    const update = this.getUpdate();
+    const stock = update?.stock ?? update?.$set?.stock;
+
+    if (stock !== undefined) {
+      await redis.set(getStockKey(doc._id), stock);
+    }
+  } catch (err) {
+    console.error('❌ Failed to update Redis stock in findOneAndUpdate:', err);
+  }
+});
+productSchema.post('updateOne', async function () {
+  try {
+    const query = this.getQuery();       // { sku: item.sku }
+    const update = this.getUpdate();     // { $inc: { stock: item.qty } }
+
+    // You need to find the updated document manually
+    const product = await this.model.findOne(query);
+    if (product && typeof product.stock === 'number') {
+      await redis.set(`stock:${product._id}`, product.stock);
+      console.log(`🔁 Redis stock synced (updateOne): stock:${product._id} = ${product.stock}`);
+    }
+  } catch (err) {
+    console.error('❌ Failed to update Redis stock in updateOne:', err);
+  }
+});
+
 productSchema.virtual('images', {
   ref: 'ProductImage',
   localField: 'sku',

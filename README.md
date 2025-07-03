@@ -138,7 +138,10 @@ ADMIN_EMAIL=admin@example.com
 RAZORPAY_KEY_ID=your_razorpay_key_id
 RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
-PORT: The port your Express server will run on.
+PORT = The port your Express server will run on.
+HOST_IP = Redis server IP address (EC2 public IP)
+REDIS_PORT= Redis port (default is 6379)
+REDIS_PASSWORD = Redis password (set in redis.conf)
 
 DATABASE_URL: Your MongoDB connection string.
 
@@ -165,3 +168,6 @@ adminAuth Middleware: Used after userAuth. It checks if the authenticated user (
 
 🚨 Error Handling
 The API uses a consistent error response structure through a centralized error handling utility (e.g., sendErrorResponse). Errors are returned as JSON objects with success: false, a message field, and an optional error field containing the underlying error message (without sensitive details).
+
+🔧 Redis Integration
+This project uses Redis to manage real-time stock levels for products. When users add or remove items from the cart, stock is adjusted instantly using Redis commands like decrby and incrby.

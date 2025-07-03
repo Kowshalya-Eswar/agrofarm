@@ -1,7 +1,3 @@
-// Load environment variables from a .env file into process.env.
-// This is essential to access sensitive information like database URLs
-// which should not be hardcoded in the source code.
-require('dotenv').config();
 
 // Import the Mongoose library, an ODM (Object Data Modeling) library
 // for MongoDB and Node.js. It simplifies interactions with the database.

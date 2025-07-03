@@ -1,8 +1,8 @@
 const express = require("express");
 const contactRouter = express.Router();
-const sendErrorResponse = require("../utils/sendErrorResponse"); // Assuming this utility exists
+const sendErrorResponse = require("../utils/sendErrorResponse"); 
 const Contact = require("../models/contact");
-const { userAuth, adminAuth } = require('../middleware/auth'); // Assuming these middlewares exist
+const { userAuth, adminAuth } = require('../middleware/auth');
 const mongoose = require('mongoose'); // For ObjectId validation
 const validator = require('validator'); // For email validation if needed in routes (already in model)
 

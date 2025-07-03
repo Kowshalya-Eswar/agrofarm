@@ -1,14 +1,16 @@
 
 require('dotenv').config();
 
-const express = require("express");
-const userRouter = require("./routes/user");
-const productRouter = require("./routes/product");
-const paymentRouter = require("./routes/payment");
-const productImageRouter = require('./routes/productImage');
-const orderRouter = require("./routes/order");
-const shipmentRouter = require("./routes/shipment");
-const contactRouter = require("./routes/contact");
+const express               = require("express");
+const userRouter            = require("./routes/user");
+const productRouter         = require("./routes/product");
+const paymentRouter         = require("./routes/payment");
+const productImageRouter    = require('./routes/productImage');
+const orderRouter           = require("./routes/order");
+const shipmentRouter        = require("./routes/shipment");
+const contactRouter         = require("./routes/contact");
+const cartRouter            = require("./routes/cart");
+require('./cron/stockScheduler');
 // Import 'cookie-parser' middleware for parsing cookies attached to the client request object.
 const cookieParser = require("cookie-parser");
 const { globalLimiter } = require("./middleware/rateLimit");
@@ -16,8 +18,6 @@ const { globalLimiter } = require("./middleware/rateLimit");
 const app = express();
 const PORT = process.env.PORT || 7777;
 const connectDB = require("./config/database");
-
-require('./cron/stockScheduler');
 
 const path = require('path'); // For serving static files
 const fs = require('fs');
@@ -28,7 +28,7 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
     console.log(`Created uploads directory at: ${uploadsDir}`);
 }
-//app.set('trust proxy', true);
+
 //app.use(globalLimiter);
 app.use('/uploads', express.static(uploadsDir)); // Serve static files from /uploads
 // Call the connectDB function to establish a connection to the database.
@@ -59,6 +59,7 @@ app.use("/", orderRouter);
 app.use("/", paymentRouter);
 app.use("/", shipmentRouter);
 app.use("/", contactRouter);
+app.use("/", cartRouter);
 
 // Start the Express server and make it listen for incoming requests on the specified port.
 app.listen(PORT, () => {

@@ -8,7 +8,7 @@ const cartRouter = express.Router();
 const getStockKey = (productId) => `stock:${productId}`;
 
 //Add item to cart
-cartRouter.post("/api/cart/add", userAuth, async (req, res) => {
+cartRouter.post("/api/cart/add", async (req, res) => {
     const { productId, quantity } = req.body;
     const stockKey = getStockKey(productId);
     
@@ -28,7 +28,7 @@ cartRouter.post("/api/cart/add", userAuth, async (req, res) => {
 });
 
 // ➖ Remove item from cart
-cartRouter.post("/api/cart/remove", userAuth, async (req, res) => {
+cartRouter.post("/api/cart/remove", async (req, res) => {
     const { productId, quantity } = req.body;
     const stockKey = getStockKey(productId);
 
@@ -60,8 +60,25 @@ cartRouter.post("/api/stock/set", userAuth, async (req, res) => {
     }
 });
 
+// If cart get cleared completely
+cartRouter.post('/api/cart/restore-stock', async (req, res) => {
+  const { items } = req.body;
+  try {
+    for (const item of items) {
+      const stockKey = `stock:${item.productId}`;
+      await redis.incrby(stockKey, item.quantity);
+    }
+
+    res.json({ status: true, message: "Stock restored" });
+  } catch (err) {
+    console.error("Failed to restore stock", err);
+    res.status(500).json({ status: false, message: "Stock restore failed" });
+  }
+});
+
+
 // Check current stock for a product
-cartRouter.get('/api/stock/:productId', userAuth, async (req, res) => {
+cartRouter.get('/api/stock/:productId', async (req, res) => {
   const { productId } = req.params;
   const stockKey = `stock:${productId}`;
 

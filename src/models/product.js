@@ -99,7 +99,6 @@ productSchema.post('updateOne', async function () {
     const product = await this.model.findOne(query);
     if (product && typeof product.stock === 'number') {
       await redis.set(`stock:${product._id}`, product.stock);
-      console.log(`🔁 Redis stock synced (updateOne): stock:${product._id} = ${product.stock}`);
     }
   } catch (err) {
     console.error('❌ Failed to update Redis stock in updateOne:', err);

@@ -107,8 +107,8 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
         }
         await order.save();
         if (req.body.event == "payment.captured") {
-            const userEmail = order.email;
-            const userName = order.firstName + " " + order.lastName; 
+            const userEmail = req.user.email;
+            const userName = req.user.firstName + " " + req.user.lastName; 
 
             // Convert orderItemsForDb into HTML table rows
             let itemsHtml = order.items.map(item => `

@@ -5,6 +5,8 @@ This project provides a robust backend API for an e-commerce application, handli
 User Management:
 User registration and login (JWT-based authentication).
 
+A password reset mail will send to user's mail, if they request to change password, by following that link they can reset password
+
 Profile retrieval for authenticated users.
 
 Password reset functionality.
@@ -36,7 +38,7 @@ Admin Access: Administrators can retrieve all payment records across the system.
 
 User Access: Regular users can retrieve payment records specifically associated with their own orders.
 
-Filtering: Payments can be efficiently filtered by orderId or transactionId for targeted retrieval.
+Filtering: Payments can be efficiently filtered by orderId for targeted retrieval.
 
 Shipment Management:
 Admin functionality: Create new shipment records.

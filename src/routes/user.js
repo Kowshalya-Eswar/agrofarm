@@ -243,7 +243,7 @@ userRouter.patch("/api/user", userAuth, async(req,res)=>{
  * @access Public - Does not require authentication.
  * @body {object} - Contains user email { "email": "user@example.com" }.
  */
-userRouter.post("/api/sendPasswordResetLink", async(req,res) => {
+userRouter.post("/api/sendPasswordResetLink", loginLimiter, async(req,res) => {
     const { email } = req.body;
     try {
         if (!email) {
@@ -286,7 +286,7 @@ userRouter.post("/api/sendPasswordResetLink", async(req,res) => {
  * @body {object} - Contains user details: { "id": "<userId>", "newPassword": "<newPassword>" }
  * @header {string} - Authorization: Bearer <reset_token>
  */
-userRouter.post('/api/reset-password', async (req, res) => {
+userRouter.post('/api/reset-password', loginLimiter, async (req, res) => {
 const { id, newPassword } = req.body;
 const authHeader = req.headers.authorization || '';
 const token = authHeader.replace('Bearer ', '').trim();

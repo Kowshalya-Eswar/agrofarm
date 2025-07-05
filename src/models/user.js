@@ -80,6 +80,12 @@ const userSchema = mongoose.Schema({
             }
         } 
     },
+    resetPasswordToken: { 
+     type: String 
+    },
+    resetTokenExpiry: { 
+        type: Date 
+    },
     role: {
         type: [String],     
         default: 'user'      // Sets 'user' as the default role if no role is explicitly provided.
@@ -95,9 +101,26 @@ userSchema.methods.verifyPassword = async function(userPassword) {
     return isPasswordValid; 
 }
 
+userSchema.methods.isResetTokenValid = function(token) {
+    const now = new Date();
+
+    // Check if token matches and not expired
+    const isTokenMatch = this.resetPasswordToken === token;
+    const isNotExpired = this.resetTokenExpiry && now < this.resetTokenExpiry;
+
+    return isTokenMatch && isNotExpired;
+};
+
+
 // for the user, used for authentication.
 userSchema.methods.getJWT = async function() {
     const token = await jwt.sign({_id:this._id},process.env.TOKEN_KEY, {expiresIn: "1d"});
+    return token; // Returns the generated JWT string.
+}
+
+//for generating password reset token
+userSchema.methods.getJWT_PasswordReset = async function() {
+    const token = await jwt.sign({_id:this._id},process.env.TOKEN_KEY, {expiresIn: "15m"});
     return token; // Returns the generated JWT string.
 }
 

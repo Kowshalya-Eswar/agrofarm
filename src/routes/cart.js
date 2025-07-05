@@ -9,9 +9,9 @@ const getStockKey = (productId) => `stock:${productId}`;
 
 //Add item to cart
 cartRouter.post("/api/cart/add", async (req, res) => {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, cartId } = req.body;
     const stockKey = getStockKey(productId);
-    
+    const holdKey = `hold:${productId}:${cartId}`;
     try {
         const stock = await redis.get(stockKey);
         const currentStock = parseInt(stock || 0, 10);
@@ -20,6 +20,11 @@ cartRouter.post("/api/cart/add", async (req, res) => {
         }
 
         await redis.decrby(stockKey, quantity);
+        await redis.hset(holdKey, {
+          quantity,
+          createdAt: Date.now()
+        });
+
         res.json({ message: "Item added to cart", status: true });
     } catch (err) {
         console.log(err);
@@ -27,26 +32,37 @@ cartRouter.post("/api/cart/add", async (req, res) => {
     }
 });
 
-// ➖ Remove item from cart
+//  Remove item from cart
 cartRouter.post("/api/cart/remove", async (req, res) => {
-    const { productId, quantity } = req.body;
+    const { productId, quantity, cartId } = req.body;
+
     const stockKey = getStockKey(productId);
+    const holdKey = `hold:${productId}:${cartId}`;
 
     try {
-        const restoreQty = parseInt(quantity || 0, 10);
-        if (restoreQty <= 0) {
+        const restoreQty = parseInt(quantity, 10);
+        if (isNaN(restoreQty) || restoreQty <= 0) {
             return sendErrorResponse(res, 400, "Invalid quantity to restore");
         }
 
+        // Increment stock back
         await redis.incrby(stockKey, restoreQty);
-        res.json({ message: "Item removed from cart", status: true });
+
+        // Delete the hold hash (if it exists)
+        const exists = await redis.exists(holdKey);
+        if (exists) {
+            await redis.del(holdKey);
+        }
+
+        res.json({ message: "Item removed from cart and stock restored", status: true });
     } catch (err) {
-        console.error(err);
+        console.error("Error removing item from cart:", err);
         sendErrorResponse(res, 500, "Failed to remove from cart", err);
     }
 });
 
-// 🧾 Set initial stock
+
+// Set initial stock
 cartRouter.post("/api/stock/set", userAuth, async (req, res) => {
     const { productId, stock } = req.body;
     const stockKey = getStockKey(productId);
@@ -62,20 +78,37 @@ cartRouter.post("/api/stock/set", userAuth, async (req, res) => {
 
 // If cart get cleared completely
 cartRouter.post('/api/cart/restore-stock', async (req, res) => {
-  const { items } = req.body;
+  const { items, cartId } = req.body;
+
+  if (!cartId || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ status: false, message: "Invalid request" });
+  }
+
   try {
     for (const item of items) {
+      const holdKey = `hold:${item.productId}:${cartId}`;
       const stockKey = `stock:${item.productId}`;
-      await redis.incrby(stockKey, item.quantity);
+
+      // Fetch held quantity from Redis hash
+      const quantityStr = await redis.hget(holdKey, "quantity");
+      const qty = parseInt(quantityStr || "0", 10);
+
+      if (qty > 0) {
+        await redis.incrby(stockKey, qty);
+        await redis.del(holdKey);
+
+        console.log(`Restored ${qty} units for product ${item.productId} from cart ${cartId}`);
+      } else {
+        console.warn(`No valid hold quantity for product ${item.productId} and cart ${cartId}`);
+      }
     }
 
-    res.json({ status: true, message: "Stock restored" });
+    res.json({ status: true, message: "Stock restored from cart" });
   } catch (err) {
-    console.error("Failed to restore stock", err);
-    res.status(500).json({ status: false, message: "Stock restore failed" });
+    console.error("Failed to restore stock:", err);
+    res.status(500).json({ status: false, message: "Stock restore failed", error: err.message });
   }
 });
-
 
 // Check current stock for a product
 cartRouter.get('/api/stock/:productId', async (req, res) => {

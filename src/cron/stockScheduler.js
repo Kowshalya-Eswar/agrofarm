@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const Order  = require("../models/order");
 const Product = require("../models/product");
+const redis = require("../utils/redisConnect");
 
 // Function to handle stock rollback
 async function rollbackStock(order) {
@@ -44,6 +45,53 @@ async function rollbackStock(order) {
     }
 }
 
+//function restores the items in the redis stock
+
+async function restoreExpiringCartHolds() {
+    try {
+        const keys = await redis.keys("hold:*");
+
+        if (keys.length === 0) {
+            console.log(`[${new Date().toISOString()}] No expiring hold keys found.`);
+            return;
+        }
+
+        console.log(`[${new Date().toISOString()}] Found ${keys.length} hold keys. Checking for expiry...`);
+
+        const now = Date.now();
+        const HOLD_EXPIRY_SECONDS = parseInt(process.env.HOLD_EXPIRY_SECONDS || "900", 10); // default 15 mins
+
+        for (const key of keys) {
+            const holdData = await redis.hgetall(key);
+
+            const quantity = parseInt(holdData.quantity, 10);
+            const createdAt = parseInt(holdData.createdAt, 10);
+
+            if (!quantity || !createdAt || isNaN(quantity) || isNaN(createdAt)) {
+                console.warn(`Skipping invalid hold key: ${key}`);
+                continue;
+            }
+
+            const age = now - createdAt;
+
+            if (age < HOLD_EXPIRY_SECONDS * 1000) {
+                continue; // still valid
+            }
+
+            const productId = key.split(":")[1];
+            const stockKey = `stock:${productId}`;
+
+            await redis.incrby(stockKey, quantity);
+            await redis.del(key);
+
+            console.log(`Restored ${quantity} stock for ${productId} from expired hold: ${key}`);
+        }
+    } catch (err) {
+        console.error(`[${new Date().toISOString()}] Error restoring expiring cart holds:`, err);
+    }
+}
+
+
 // Schedule the cron job to run every 15 minutes
 // Cron syntax: * * 15 * * * *
 // Minute: */15 (every 15th minute: 0, 15, 30, 45)
@@ -78,6 +126,8 @@ cron.schedule('1/15 * * * *', async () => {
         } else {
             console.log('No pending orders older than 15 minutes or failed orders found.');
         }
+        // Also restore Redis stock holds (cart logic)
+        await restoreExpiringCartHolds();
 
     } catch (error) {
         console.error('Error in stock management cron job:', error);

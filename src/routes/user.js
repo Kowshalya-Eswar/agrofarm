@@ -1,12 +1,12 @@
 const express = require("express")
 const userRouter = express.Router();
-const sendErrorErrorResponse = require("../utils/sendErrorResponse");
+const sendErrorResponse = require("../utils/sendErrorResponse");
 const validator = require("validator");
 const User = require("../models/user.js");
 const ValidateRegisterData = require('../utils/validate');
 const {userAuth, adminAuth} = require('../middleware/auth');
 const { loginLimiter, signupLimiter } = require("../middleware/rateLimit");
-const sendEmail = require("../utils/sendEmail")
+const sendEmail = require("../utils/sendEmail");
 
 /**
  * @route POST /api/user/register
@@ -94,7 +94,7 @@ userRouter.post("/api/user/register", signupLimiter, async (req,res)=> {
         }
 
         // Send an error response with the custom message and appropriate status code.
-        return sendErrorErrorResponse(res, statusCode, customMessage, err);
+        return sendErrorResponse(res, statusCode, customMessage, err);
     }
 })
 
@@ -116,10 +116,10 @@ userRouter.get("/api/users", userAuth, async (req,res)=> {
         const limitNum = Math.min(parseInt(limit),100);
 
         if (isNaN(pageNum) || pageNum < 1) {
-            return sendErrorErrorResponse(res, 400, 'Invalid page number. Must be a positive integer.');
+            return sendErrorResponse(res, 400, 'Invalid page number. Must be a positive integer.');
         }
         if (isNaN(limitNum) || limitNum < 1) {
-            return sendErrorErrorResponse(res, 400, 'Invalid limit. Must be a positive integer.');
+            return sendErrorResponse(res, 400, 'Invalid limit. Must be a positive integer.');
         }
 
         const queryFilter = {};
@@ -153,7 +153,7 @@ userRouter.get("/api/users", userAuth, async (req,res)=> {
             }
         });
     } catch(err) {
-        return sendErrorErrorResponse(res, 400, 'failed to retrieve user',err )
+        return sendErrorResponse(res, 400, 'failed to retrieve user',err )
     }
 })
 
@@ -175,7 +175,7 @@ userRouter.get("/api/user/:emailId", userAuth, async(req,res)=> {
             }
         )
     } catch(err) {
-        return sendErrorErrorResponse(res, 400, 'failed to retrieve user',err )
+        return sendErrorResponse(res, 400, 'failed to retrieve user',err )
     }
 })
 
@@ -191,14 +191,14 @@ userRouter.delete("/api/user", userAuth, adminAuth, async(req,res)=> {
     try{
         const deleteUser = await User.findOneAndDelete({email:emailId});
         if (!deleteUser) {
-            return sendErrorErrorResponse(res, 404, 'user with email Id not found');
+            return sendErrorResponse(res, 404, 'user with email Id not found');
         }
         res.status(200).json({
             message:"user deleted succussfully",
             success:true,
         })
     }catch(err) {
-        return sendErrorErrorResponse(res, 400, 'unable to delete the user', err)
+        return sendErrorResponse(res, 400, 'unable to delete the user', err)
     }
 })
 
@@ -217,15 +217,15 @@ userRouter.patch("/api/user", userAuth, async(req,res)=>{
         ALLOWED_UPDATES.includes(k)
     );
     if(!isUpdateAllowed) {
-        return sendErrorErrorResponse(res, 400, 'update not allowed',[]);
+        return sendErrorResponse(res, 400, 'update not allowed',[]);
     }
     try{
-       const user = await User.findOneAndUpdate({email:req.user.email}, data, {
+    const user = await User.findOneAndUpdate({email:req.user.email}, data, {
         returnDocument: "after",
         runValidators:true
         });
         if (!user) {
-            return sendErrorErrorResponse(res, 404, 'user with email Id not found');
+            return sendErrorResponse(res, 404, 'user with email Id not found');
         }
         res.status(200).json({
             message:"user updated succussfully",
@@ -233,9 +233,78 @@ userRouter.patch("/api/user", userAuth, async(req,res)=>{
             data: user
         })
     }catch(err) {
-        return sendErrorErrorResponse(res, 400, 'unable to update the user', err)
+        return sendErrorResponse(res, 400, 'unable to update the user', err)
     }
 })
+
+/**
+ * @route POST /api/sendPasswordResetLink
+ * @description verifies the user email and sends password reset link to user mail
+ * @access Public - Does not require authentication.
+ * @body {object} - Contains user email { "email": "user@example.com" }.
+ */
+userRouter.post("/api/sendPasswordResetLink", async(req,res) => {
+    const { email } = req.body;
+    try {
+        if (!email) {
+            return sendErrorResponse(res, 404, 'user mail is required');
+        } 
+        const user = await User.findOne({"email": email});
+        if (!user) {
+            return sendErrorResponse(res, 404, 'email not registered with this system');
+        }
+        // Save token and expiry to user model
+        const expiryTime = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes from now
+    
+        const resetToken = await user.getJWT_PasswordReset();
+        user.resetPasswordToken = resetToken;
+        user.resetTokenExpiry = expiryTime;
+        await user.save();
+        const resetUrl = `https://www.cocofields.in/reset-password?token=${resetToken}&id=${user._id}`;
+        const emailBody = `
+            <p>Hello ${user.firstName || ''},</p>
+            <p>Click the button below to reset your password. The link is valid for 15 minutes:</p>
+            <p style="text-align: center;">
+            <a href="${resetUrl}" style="background-color:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Reset Password</a>
+            </p>
+
+        `;
+        await sendEmail.run('Reset Password Link!', emailBody);
+        res.status(200).json ({
+            status: true,
+            message: "reset password link sent to the mail address"
+        })
+    } catch (err) {
+        return sendErrorResponse(res, 500, 'Failed to send reset password mail', err)
+    }
+})
+
+/**
+ * @route POST /api/reset-password
+ * @description Verifies the reset password token from the Authorization header and updates the user's password if valid.
+ * @access Public - Accessible via a reset password link. Requires Bearer token in Authorization header.
+ * @body {object} - Contains user details: { "id": "<userId>", "newPassword": "<newPassword>" }
+ * @header {string} - Authorization: Bearer <reset_token>
+ */
+userRouter.post('/api/reset-password', async (req, res) => {
+const { id, newPassword } = req.body;
+const authHeader = req.headers.authorization || '';
+const token = authHeader.replace('Bearer ', '').trim();
+try {
+    const user = await User.findById(id);
+    const isVerifyToken = await user.isResetTokenValid(token);
+    if (!isVerifyToken) {
+        sendErrorResponse(res, 400, 'Invalid or expired token');
+    }
+    await User.findByIdAndUpdate(id,{password:newPassword}, {
+        runValidators:true
+    });
+    res.json({ status: true,
+        message: 'Password reset successful' });
+} catch (err) {
+    sendErrorResponse(res, 500, 'password reset failed', err);
+}
+});
 
 /**
  * @route POST /api/login
@@ -270,7 +339,7 @@ userRouter.post("/api/login", loginLimiter, async(req,res)=>{
         }
     }
     catch(err) {
-        return sendErrorErrorResponse(res, 400, 'login attempt failed', err)
+        return sendErrorResponse(res, 400, 'login attempt failed', err)
     }
 })
 
@@ -307,7 +376,7 @@ userRouter.patch("/api/resetPassword", userAuth, async(req,res)=>{
         })
 
     } catch(err) {
-        sendErrorErrorResponse(res, 400, 'reset password failed', err);
+        sendErrorResponse(res, 400, 'reset password failed', err);
     }
 
 })

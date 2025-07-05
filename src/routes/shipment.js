@@ -21,12 +21,8 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
             return sendErrorResponse(res, 400, "Missing required shipment fields.");
         }
 
-        if (!mongoose.Types.ObjectId.isValid(orderId)) {
-            return sendErrorResponse(res, 400, 'Invalid order ID format.');
-        }
-
         // Check if the order exists
-        const order = await Order.findById(orderId);
+        const order = await Order.findOne({"orderId":orderId});
         if (!order) {
             return sendErrorResponse(res, 404, `Order with ID '${orderId}' not found.`);
         }
@@ -44,7 +40,7 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
         await newShipment.save();
 
         // Optional: Update the associated order's status to 'shipped' if that's your workflow
-        await Order.findByIdAndUpdate(orderId, { status: 'shipped' });
+        await Order.findOneAndUpdate({orderId: orderId}, { status: 'shipped' });
 
         res.status(201).json({
             message: "Shipment created successfully",
@@ -98,9 +94,6 @@ shipmentRouter.get('/api/shipments', userAuth, async (req, res) => {
 
         // Apply optional orderId filter
         if (orderId) {
-            if (!mongoose.Types.ObjectId.isValid(orderId)) {
-                return sendErrorResponse(res, 400, 'Invalid order ID format in query parameter.');
-            }
             queryFilter.orderId = orderId;
             if (!isAdmin) {
                 if (!queryFilter.orderId.$in.some(id => id.equals(orderId))) {
@@ -208,9 +201,9 @@ shipmentRouter.patch('/api/shipments/:trackingNumber/status', userAuth, adminAut
 
         // Optional: Update associated order status if shipment is delivered
         if (updatedShipment.status === 'delivered') {
-            await Order.findByIdAndUpdate(updatedShipment.orderId, { status: 'delivered' });
+            await Order.findOneAndUpdate({orderId: updatedShipment.orderId}, { status: 'delivered' });
         } else if (updatedShipment.status === 'failed' || updatedShipment.status === 'returned') {
-            await Order.findByIdAndUpdate(updatedShipment.orderId, { status: 'problem' }); // Or a custom 'shipment_failed' status
+            await Order.findOneAndUpdate({orderId: updatedShipment.orderId}, { status: 'shipment_failed' }); 
         }
 
 

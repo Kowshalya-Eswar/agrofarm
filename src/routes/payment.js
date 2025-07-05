@@ -11,15 +11,14 @@ const mongoose = require('mongoose');
 /**
  * @route GET /api/payments
  * @description Retrieves payment records. Admin can fetch all payments. Regular users can fetch their own payments.
- * Can filter payments by `orderId` or `transactionId` using query parameters.
+ * Can filter payments by `orderId`  using query parameters.
  * @access Private (Authenticated User/Admin)
  * @middleware userAuth
  * @query orderId {string} - Optional. The MongoDB _id of the order to filter payments by.
- * @query transactionId {string} - Optional. The unique identifier of a payment transaction to filter by.
  */
 paymentRouter.get('/api/payments', userAuth, async (req, res) => {
     try {
-        const {orderId, transactionId} = req.query;
+        const {orderId} = req.query;
         const isAdmin = req.user.role.includes('admin');
         let queryFilter = {};
         if (!isAdmin) {
@@ -34,9 +33,6 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
             queryFilter.orderId = {$in:userorderIds}
         }
         if (orderId) {
-            if (!mongoose.Types.ObjectId.isValid(orderId)) {
-                return sendErrorResponse(res,404,'invalid order id');
-            }
             queryFilter.orderId = orderId;
             if(!isAdmin) {
                 //check if any of the orderId in query filter has  orderId got in request
@@ -48,14 +44,10 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
                 } 
             }
         }
-        if (transactionId) {
-            queryFilter.transactionId = transactionId;
-        }
+       
         const payments = await Payment.find(queryFilter).select('-__v -_id');
         let message = "Payments retrieved successfully";
-        if (transactionId) {
-            message = `Payment${payments.length !== 1 ? 's' : ''} retrieved successfully for transaction ID '${transactionId}'`;
-        } else if (orderId) {
+         if (orderId) {
             message = `Payments retrieved successfully for order ID '${orderId}'`;
         } else if (!isAdmin) {
             message = "Your payments retrieved successfully";
@@ -63,8 +55,7 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
             message = "All payments retrieved successfully (Admin)";
         }
 
-        if (payments.length === 0 && (orderId || transactionId || !isAdmin)) {
-            // Return 404 only if a specific filter was applied (orderId or transactionId)
+        if (payments.length === 0 && (orderId || !isAdmin)) {
             // or if it's a non-admin request with no payments found.
             // If it's an admin requesting all payments and none exist, it returns 200 with an empty array.
             return sendErrorResponse(res, 404, `No payments found matching the criteria.`);
@@ -202,6 +193,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
     }
 })
 
+/*****************  currently this route is not used  *************************/
 /**
  * @route PATCH /api/payments/:transactionId/status
  * @description Updates the status of a payment identified by its transaction ID.

@@ -25,7 +25,8 @@ productRouter.post('/api/product',userAuth, adminAuth, async(req, res)=>{
         await product.save();
         res.status(200).json({
             message:"product added successfully",
-            success: true
+            success: true,
+            data : product
         })
 
     } catch(err) {

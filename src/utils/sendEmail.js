@@ -2,12 +2,9 @@
 const {sesClient} = require('./sesClient');
 const { SendEmailCommand } = require('@aws-sdk/client-ses');
 
-const createSendEmailCommand = (toAddress, fromAddress, subject, body) => {
+const createSendEmailCommand = (toAddress, subject, body) => {
   return new SendEmailCommand({
     Destination: {
-       CcAddresses: [
-        process.env.ADMIN_EMAIL
-      ],
       ToAddresses: [
         toAddress
       ],
@@ -30,14 +27,13 @@ const createSendEmailCommand = (toAddress, fromAddress, subject, body) => {
         Data: subject,
       },
     },
-    Source: fromAddress,
+    Source: process.env.ADMIN_EMAIL,
   });
 };
 
-const run = async (subject, body) => {
+const run = async (subject, body, toAddress) => {
   const sendEmailCommand = createSendEmailCommand(
-    "kowsi.ganeshan@gmail.com",
-    "support@cocofields.in",
+     toAddress,
     subject,
     body
   );

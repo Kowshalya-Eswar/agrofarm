@@ -191,7 +191,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
                 </body>
                 </html>
             `;
-            mailStatus = await sendEmail.run(emailSubject, emailHtmlBody);
+            mailStatus = await sendEmail.run(emailSubject, emailHtmlBody, userEmail);
         } 
         console.log("order updated");
         return res.status(200).json({ msg: "webhook received successfully" });

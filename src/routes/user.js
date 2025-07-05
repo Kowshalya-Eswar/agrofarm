@@ -62,7 +62,7 @@ userRouter.post("/api/user/register", signupLimiter, async (req,res)=> {
         </body>
         </html>
         `;
-        const mailStatus = await sendEmail.run('Welcome to Cocofields!', emailHtmlBody);
+        const mailStatus = await sendEmail.run('Welcome to Cocofields!', emailHtmlBody, email);
         res.status(200).json({
             message: "user added successfully",
             success: true
@@ -269,7 +269,7 @@ userRouter.post("/api/sendPasswordResetLink", async(req,res) => {
             </p>
 
         `;
-        await sendEmail.run('Reset Password Link!', emailBody);
+        await sendEmail.run('Reset Password Link!', emailBody, email);
         res.status(200).json ({
             status: true,
             message: "reset password link sent to the mail address"
@@ -294,7 +294,7 @@ try {
     const user = await User.findById(id);
     const isVerifyToken = await user.isResetTokenValid(token);
     if (!isVerifyToken) {
-        sendErrorResponse(res, 400, 'Invalid or expired token');
+       return sendErrorResponse(res, 400, 'Invalid or expired token');
     }
     await User.findByIdAndUpdate(id,{password:newPassword}, {
         runValidators:true

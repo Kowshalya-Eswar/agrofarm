@@ -9,6 +9,12 @@ const jwt       = require("jsonwebtoken");
 // This schema outlines the structure, data types, validation rules, and custom methods
 // for user documents stored in your MongoDB database.
 const userSchema = mongoose.Schema({
+    _id: {
+        type: String,
+        required: true,
+        immutable:true,
+        default:uuidv4
+    },
     // firstName field: Stores the user's first name.
     firstName: {
         type: String,        
@@ -61,14 +67,6 @@ const userSchema = mongoose.Schema({
     age:{
         type: Number,        
         min: 18,             
-    },
-    userId: {
-        type: String,
-        unique: true,
-        required: true,
-        immutable:true,
-        index:true,
-        default:uuidv4
     },
     gender: {
         type: String,      

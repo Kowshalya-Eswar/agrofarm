@@ -10,12 +10,12 @@ async function rollbackStock(order) {
         let rollbackSuccess = false;
         for (const item of order.items) {
             try {
-                await Product.updateOne({ sku: item.sku }, { $inc: { stock: item.qty } });
+                await Product.updateOne({ _id: item.product_id }, { $inc: { stock: item.qty } });
                 rollbackSuccess = true;
-                console.log(`Rolled back ${item.qty} for SKU ${item.sku} (Order ID: ${order.orderId})`);
+                console.log(`Rolled back ${item.qty} for product ${item.product_id} (Order ID: ${order.orderId})`);
             } catch (error) {
                 rollbackSuccess = false;
-                console.error(`Error rolling back stock for SKU ${item.sku} (Order ID: ${order.orderId}):`, error);
+                console.error(`Error rolling back stock for product ${item.product_id} (Order ID: ${order.orderId}):`, error);
             }
         }
           if (rollbackSuccess) {

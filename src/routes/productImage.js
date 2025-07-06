@@ -19,7 +19,7 @@ const path = require('path');
  * @access Private (Admin Only)
  * @middleware userAuth, adminAuth, upload.single('productImageFile')
  * @body {multipart/form-data} - Contains fields:
- * - `sku`: string (text field)
+ * - `id`: string (text field)
  * - `isMain`: boolean (text field, 'true' or 'false')
  * - `productImageFile`: file (the image file itself)
  */
@@ -30,15 +30,15 @@ productImageRouter.post(
     upload.single('productImageFile'),
     async (req, res) => {
         try {
-            const { sku, isMain } = req.body;
+            const { product_id, isMain } = req.body;
             const uploadedFile = req.file;
 
-            if (!sku) {
-                // If Multer processed the file but sku is missing, clean up the file.
+            if (!product_id) {
+                // If Multer processed the file but id is missing, clean up the file.
                 if (uploadedFile && fs.existsSync(uploadedFile.path)) {
                     fs.unlinkSync(uploadedFile.path);
                 }
-                return sendErrorResponse(res, 400, "Product SKU is required.");
+                return sendErrorResponse(res, 400, "Product id is required.");
             }
 
             if (!uploadedFile) {
@@ -46,16 +46,10 @@ productImageRouter.post(
             }
 
             const isMainBoolean = isMain === 'true';
-           /* const productExists = await Product.findOne({ sku: sku });
-            if (!productExists) {
-                // Clean up the uploaded file if the product SKU is invalid.
-                fs.unlinkSync(uploadedFile.path);
-                return sendErrorResponse(res, 404, `Product with SKU '${sku}' not found.`);
-            } */
 
             const imageUrl = `/uploads/${uploadedFile.filename}`;
 
-            const newImage = new ProductImage({ sku, imageUrl, isMain: isMainBoolean });
+            const newImage = new ProductImage({ product_id, imageUrl, isMain: isMainBoolean });
             await newImage.save();
 
             res.status(201).json({
@@ -93,24 +87,24 @@ productImageRouter.post(
 );
 
 /**
- * @route GET /api/productimages/:sku
- * @description Retrieves all images associated with a specific product SKU.
+ * @route GET /api/productimages/:product_id
+ * @description Retrieves all images associated with a specific product id.
  * @access Private (Authenticated User)
  * @middleware userAuth
- * @param {string} sku - The SKU of the product whose images are to be retrieved.
+ * @param {string} product_id - The product id of the product whose images are to be retrieved.
  */
-productImageRouter.get('/api/productimages/:sku', userAuth, async (req, res) => {
+productImageRouter.get('/api/productimages/:product_id', userAuth, async (req, res) => {
     try {
-        const { sku } = req.params;
-        if (!sku) {
-            return sendErrorResponse(res, 400, "Product SKU is required.");
+        const { product_id } = req.params;
+        if (!product_id) {
+            return sendErrorResponse(res, 400, "Product id is required.");
         }
-        const images = await ProductImage.find({ sku }).sort({ isMain: -1, createdAt: 1 }).select('-__v');
+        const images = await ProductImage.find({ product_id }).sort({ isMain: -1, createdAt: 1 }).select('-__v');
         if (images.length === 0) {
-            return sendErrorResponse(res, 404, `No images found for product SKU '${sku}'.`);
+            return sendErrorResponse(res, 404, `No images found for product id '${product_id}'.`);
         }
         res.status(200).json({
-            message: `Images for product SKU '${sku}' retrieved successfully`,
+            message: `Images for product product_id '${product_id}' retrieved successfully`,
             success: true,
             data: images
         });

@@ -3,6 +3,9 @@ const mongoose = require("mongoose");
 const redis = require('../utils/redisConnect');
 const getStockKey = (productId) => `stock:${productId}`;
 productSchema = mongoose.Schema({
+    _id: {
+        type: String                                
+    },
     productname: {
         type: String,     
         required: true,   
@@ -32,16 +35,12 @@ productSchema = mongoose.Schema({
             message: '{VALUE} not supported'
         }
     },
-    sku: {
-        type: String,     
-        trim: true,       
-        unique: true                                
-    }
+  
 }, {
     timestamps: true
 });
 
-function generateRandomSKU(length = 8) {
+function generateRandomProductId(length = 8) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
     const charactersLength = characters.length;
@@ -54,8 +53,8 @@ function generateRandomSKU(length = 8) {
 productSchema.pre('save', async function (next) {
   try {
     if (this.isNew) {
-      this.sku = 'prod-' + generateRandomSKU(10);
-      await redis.set(getStockKey(this._id), this.stock); // use `this`, not `doc`
+      this._id = 'prod-' + generateRandomProductId(10);
+      await redis.set(getStockKey(this._id), this.stock);
     }
     next();
   } catch (err) {
@@ -68,6 +67,7 @@ productSchema.post('findOneAndDelete', async function (doc) {
   if (doc) {
     try {
       await redis.del(getStockKey(doc._id));
+      await Child.deleteMany({ parentId: this._id });
     } catch (err) {
       console.error('❌ Redis delete failed:', err);
     }
@@ -87,13 +87,13 @@ productSchema.post('findOneAndUpdate', async function (doc) {
       await redis.set(getStockKey(doc._id), stock);
     }
   } catch (err) {
-    console.error('❌ Failed to update Redis stock in findOneAndUpdate:', err);
+    console.error('Failed to update Redis stock in findOneAndUpdate:', err);
   }
 });
 productSchema.post('updateOne', async function () {
   try {
-    const query = this.getQuery();       // { sku: item.sku }
-    const update = this.getUpdate();     // { $inc: { stock: item.qty } }
+    const query = this.getQuery();      
+    const update = this.getUpdate();   
 
     // You need to find the updated document manually
     const product = await this.model.findOne(query);
@@ -101,14 +101,14 @@ productSchema.post('updateOne', async function () {
       await redis.set(`stock:${product._id}`, product.stock);
     }
   } catch (err) {
-    console.error('❌ Failed to update Redis stock in updateOne:', err);
+    console.error('Failed to update Redis stock in updateOne:', err);
   }
 });
 
 productSchema.virtual('images', {
   ref: 'ProductImage',
-  localField: 'sku',
-  foreignField: 'sku', // this matches in ProductImage
+  localField: '_id',
+  foreignField: 'product_id', // this matches in ProductImage
   justOne: false,
 });
 

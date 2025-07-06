@@ -10,7 +10,8 @@ const paymentSchema = mongoose.Schema({
     orderId: {
         type: String,
         required: true,
-        index: true 
+        index: true,
+        ref: 'Order'
     },
     method: {
         type: String,

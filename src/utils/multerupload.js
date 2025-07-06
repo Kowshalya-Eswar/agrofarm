@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
         // Generate a unique suffix using a timestamp and a random number.
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         // Combine the fieldname, unique suffix, and original file extension for the new filename.
-        cb(null, req.body.sku + '-' + uniqueSuffix + path.extname(file.originalname));
+        cb(null, req.body.product_id + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
 

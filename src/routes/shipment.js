@@ -73,7 +73,7 @@ shipmentRouter.get('/api/shipments', userAuth, async (req, res) => {
     try {
         const { orderId, trackingNumber } = req.query;
         const isAdmin = req.user.role.includes('admin');
-        const currentUserId = req.user.userId;
+        const currentUserId = req.user._id;
 
         let queryFilter = {};
 
@@ -145,9 +145,9 @@ shipmentRouter.get('/api/shipments/:trackingNumber', userAuth, async (req, res) 
     try {
         const { trackingNumber } = req.params;
         const isAdmin = req.user.role.includes('admin');
-        const currentUserId = req.user.userId;
+        const currentUserId = req.user._id;
 
-        const shipment = await Shipment.findOne({ trackingNumber: trackingNumber }).select('-_id -__v');
+        const shipment = await Shipment.findOne({ trackingNumber: trackingNumber }).select('-__v');
 
         if (!shipment) {
             return sendErrorResponse(res, 404, `Shipment with tracking number '${trackingNumber}' not found.`);

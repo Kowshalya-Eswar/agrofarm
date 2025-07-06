@@ -8,18 +8,17 @@ const {userAuth, adminAuth} = require('../middleware/auth');
  * @route POST /api/product
  * @description Creates a new product in the database.
  * @middleware userAuth, adminAuth - Requires user authentication and admin privileges.
- * @body {object} - Contains product details like productname, description, price, unit, stock, sku.
+ * @body {object} - Contains product details like productname, description, price, unit, stock, product_id.
  */
 productRouter.post('/api/product',userAuth, adminAuth, async(req, res)=>{
     try {
-        const {productname, description, price, unit, stock, sku} = req.body;
+        const {productname, description, price, unit, stock} = req.body;
         const product = new Product({
             productname,
             description,
             price,
             unit,
-            stock,
-            sku
+            stock
         })
 
         await product.save();
@@ -35,15 +34,15 @@ productRouter.post('/api/product',userAuth, adminAuth, async(req, res)=>{
 })
 
 /**
- * @route PATCH /api/product/:sku
- * @description Updates an existing product identified by its SKU.
+ * @route PATCH /api/product/:id
+ * @description Updates an existing product identified by its id.
  * @middleware userAuth, adminAuth - Requires user authentication and admin privileges.
- * @param {string} sku - The SKU of the product to update (from URL parameters).
+ * @param {string} id - The id of the product to update (from URL parameters).
  * @body {object} - Contains the fields to be updated (e.g., { "price": 25.99 }).
  */
-productRouter.patch('/api/product/:sku',userAuth, adminAuth, async(req, res)=>{
+productRouter.patch('/api/product/:id',userAuth, adminAuth, async(req, res)=>{
     try {
-        const {sku} = req.params;
+        const {id} = req.params;
         const data = req.body;
         const ALLOWED_UPDATES = ["productname","price", "unit", "stock","description"];
         const is_allowed_updates = Object.keys(data).every(key =>
@@ -52,7 +51,7 @@ productRouter.patch('/api/product/:sku',userAuth, adminAuth, async(req, res)=>{
         if(!is_allowed_updates) {
             throw new Error("update not allowed");
         }
-        const updatedProduct = await Product.findOneAndUpdate({sku:sku}, data, {
+        const updatedProduct = await Product.findByIdAndUpdate(id, data, {
             returnDocument: "after",
             runValidators:true
         })
@@ -129,13 +128,13 @@ productRouter.get('/api/product', async(req,res)=>{
 
 /**
  * @route GET /api/product
- * @description Retrieves a specific product based on sku
- * @param {string} sku - The SKU of the product to delete (from URL parameters).
+ * @description Retrieves a specific product based on product id
+ * @param {string} id - The product id of the product to delete (from URL parameters).
  */
-productRouter.get('/api/product/:sku', async(req,res)=>{
+productRouter.get('/api/product/:id', async(req,res)=>{
     try {
-        const {sku} = req.params;
-        const product = await Product.findOne({sku:sku}).populate({path:'images', select:'imageUrl isMain' }).select('-__v');
+        const {id} = req.params;
+        const product = await Product.findById(id).populate({path:'images', select:'imageUrl isMain' }).select('-__v');
         res.status(200).json({
             success: true,
             message: 'Product details retrieved successfully',
@@ -146,24 +145,24 @@ productRouter.get('/api/product/:sku', async(req,res)=>{
     }
 })
 /**
- * @route DELETE /api/product/:sku
- * @description Deletes a product identified by its SKU.
+ * @route DELETE /api/product/:id
+ * @description Deletes a product identified by its id.
  * @middleware userAuth, adminAuth - Requires user authentication and admin privileges.
- * @param {string} sku - The SKU of the product to delete (from URL parameters).
+ * @param {string} id - The id of the product to delete (from URL parameters).
  */
-productRouter.delete("/api/product/:sku", userAuth, adminAuth, async(req,res)=>{
+productRouter.delete("/api/product/:id", userAuth, adminAuth, async(req,res)=>{
     try {
-        const { sku } = req.params;
-        console.log("Attempting to delete product with SKU:", sku);
+        const { id } = req.params;
+        console.log("Attempting to delete product with id:", id);
 
-        const deletedProduct = await Product.findOneAndDelete({sku: sku});
+        const deletedProduct = await Product.findByIdAndDelete(id);
 
         if (!deletedProduct) {
-            return sendErrorResponse(res, 404, `Product with SKU '${sku}' not found.`);
+            return sendErrorResponse(res, 404, `Product with id '${id}' not found.`);
         }
         res.status(200).json({
             status: true,
-            message: `Product with SKU '${sku}' deleted successfully`,
+            message: `Product with id '${id}' deleted successfully`,
             data: deletedProduct
         })
     } catch(err) {

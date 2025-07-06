@@ -12,13 +12,13 @@ const createPayment = require("../utils/createPayment");
  * It validates product availability, deducts stock, and calculates total amount server-side.
  * @access Private (Authenticated User)
  * @middleware userAuth
- * @body {object} - Contains order details: `items` (Array of objects: `{ sku: string, qty: number }`), `address`: string.
+ * @body {object} - Contains order details: `items` (Array of objects: `{ product_id: string, qty: number }`), `address`: string.
  */
 orderRouter.post('/api/orders', userAuth, async (req, res) => {
      let orderItemsForDb = [];
     try {
         const { items, shippingAddress } = req.body;
-        const userId = req.user.userId;
+        const userId = req.user._id;
 
         if (!items || !Array.isArray(items) || items.length === 0 || !shippingAddress) {
             return sendErrorResponse(res, 400, "Order must contain items and a shipping address.");
@@ -27,21 +27,21 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         let calculatedTotalAmount = 0;
        
         for (const item of items) {
-            if (!item.sku || typeof item.qty !== 'number' || item.qty < 1 || !Number.isInteger(item.qty)) {
-                return sendErrorResponse(res, 400, "Each item must have a valid SKU and a positive integer quantity.");
+            if (!item.product_id || typeof item.qty !== 'number' || item.qty < 1 || !Number.isInteger(item.qty)) {
+                return sendErrorResponse(res, 400, "Each item must have a valid product id and a positive integer quantity.");
             }
 
-            const product = await Product.findOne({ sku: item.sku });
+            const product = await Product.findOne({ _id: item.product_id });
 
             if (!product) {
-                return sendErrorResponse(res, 404, `Product with SKU '${item.sku}' not found.`);
+                return sendErrorResponse(res, 404, `Product with product_id '${item.product_id}' not found.`);
             }
             if (product.stock < item.qty) {
                 return sendErrorResponse(res, 400, `Insufficient stock for product '${product.productname}'. Available: ${product.stock}, Requested: ${item.qty}.`);
             }
 
             const updatedProduct = await Product.findOneAndUpdate(
-                { sku: item.sku, stock: { $gte: item.qty } },
+                { _id: item.product_id, stock: { $gte: item.qty } },
                 { $inc: { stock: -item.qty } },
                 { new: true }
             );
@@ -54,7 +54,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             calculatedTotalAmount += itemPrice * item.qty;
 
             orderItemsForDb.push({
-                sku: product.sku,
+                product_id: product._id,
                 qty: item.qty,
                 priceAtOrder: itemPrice,
                 productNameAtOrder: product.productname
@@ -73,7 +73,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         }
   
         const newOrder = new Order({
-            orderId: result.data.orderId,
+            _id: result.data.orderId,
             userId,
             items: orderItemsForDb,
             totalAmount: calculatedTotalAmount,
@@ -107,10 +107,13 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
  */
 orderRouter.get('/api/orders', userAuth, async (req, res) => {
     try {
-       const orders = await Order.find({userId: req.user.userId})
-            // CORRECTED POPULATE: Use foreignField to match Order.userId with User.userId
-            .populate({ path: 'userId', model: 'User', select: 'userName email userId -_id', foreignField: 'userId' })
-            .select('-__v -_id')
+       const orders = await Order.find({userId: req.user._id})
+           .populate({ 
+            path: 'userId',
+            model: 'User', 
+            select: 'userName email'
+            })
+            .select('-__v')
             .sort({ 'createdAt': -1 });
 
         if (orders.length === 0) {
@@ -141,15 +144,10 @@ orderRouter.get('/api/orders/:id', userAuth, async (req, res) => {
         const userId = req.user._id;
         const isAdmin = req.user.role.includes('admin');
 
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return sendErrorResponse(res, 400, 'Invalid order ID format.');
-        }
-
         const order = await Order.findById(id).populate({
             path :'userId',
             modal: 'User',
-            foreignField: 'userId',
-            select:'userId email userName -_id'
+            select:'email userName'
         }).select('-__v');
 
         if (!order) {
@@ -182,10 +180,6 @@ orderRouter.patch('/api/orders/:id/status', userAuth, adminAuth, async (req, res
     try {
         const { id } = req.params;
         const { status } = req.body;
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return sendErrorResponse(res, 400, 'Invalid order ID format.');
-        }
 
         const allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
         if (!status || !allowedStatuses.includes(status)) {

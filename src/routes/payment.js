@@ -103,10 +103,6 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
             const userEmail = notes ? notes.email : 'N/A';
             const firstName = notes ? notes.firstName : 'N/A';
             const lastName = notes ? notes.lastName : 'N/A';
-
-            console.log("Email from notes:", userEmailFromNotes);
-            console.log("First Name from notes:", userFirstNameFromNotes);
-            console.log("Last Name from notes:", userLastNameFromNotes);
             const userName = firstName + " " + lastName
             // Convert orderItemsForDb into HTML table rows
             let itemsHtml = order.items.map(item => `

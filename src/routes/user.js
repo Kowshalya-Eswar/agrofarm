@@ -296,8 +296,8 @@ try {
     if (!isVerifyToken) {
        return sendErrorResponse(res, 400, 'Invalid or expired token');
     }
-    await User.findByIdAndUpdate(id,{password:newPassword}, {
-        runValidators:true
+    await User.findByIdAndUpdate(id, { password: newPassword }, {
+        runValidators: true // This will now apply to the updated (hashed) password
     });
     res.json({ status: true,
         message: 'Password reset successful' });

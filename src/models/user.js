@@ -138,8 +138,21 @@ userSchema.pre('save', async function (next) {
         throw new Error(err.message)
     }
 });
+userSchema.pre('findOneAndUpdate', async function(next) {
+    try {
+        const update = this.getUpdate(); // Get the update object
 
-// Create th Mongoose model named "User" using the defined `userSchema`
+        if (update && update.password) {
+            // If password is being updated, hash it
+            update.password = await bcrypt.hash(update.password, 10);
+        }
+        next();
+    } catch (err) {
+        next(new Error(err.message));
+    }
+});
+
+// Create the Mongoose model named "User" using the defined `userSchema`
 const User = mongoose.model("User",userSchema);
 
 module.exports = User;

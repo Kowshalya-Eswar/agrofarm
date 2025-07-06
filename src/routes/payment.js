@@ -76,7 +76,7 @@ paymentRouter.get('/api/payments', userAuth, async (req, res) => {
  * @desc    Razorpay Webhook Handler - Handles payment status updates from Razorpay
  * @access  Public (should be protected by signature verification) 
  **/
-paymentRouter.post("/api/payment/hook", userAuth, async(req, res) =>{
+paymentRouter.post("/api/payment/hook", async(req, res) =>{
     try {
         const signature = req.get('X-Razorpay-Signature');
         const isWebhookValid = validateWebhookSignature(JSON.stringify(req.body), 
@@ -97,10 +97,17 @@ paymentRouter.post("/api/payment/hook", userAuth, async(req, res) =>{
             order.status = "failed";
         }
         await order.save();
+        console.log("order saved");
         if (req.body.event == "payment.captured") {
-            const userEmail = req.user.email;
-            const userName = req.user.firstName + " " + req.user.lastName; 
+            const notes = paymentDetails.notes;
+            const userEmail = notes ? notes.email : 'N/A';
+            const firstName = notes ? notes.firstName : 'N/A';
+            const lastName = notes ? notes.lastName : 'N/A';
 
+            console.log("Email from notes:", userEmailFromNotes);
+            console.log("First Name from notes:", userFirstNameFromNotes);
+            console.log("Last Name from notes:", userLastNameFromNotes);
+            const userName = firstName + " " + lastName
             // Convert orderItemsForDb into HTML table rows
             let itemsHtml = order.items.map(item => `
                 <tr>

@@ -23,16 +23,16 @@ async function rollbackStock(order) {
                 try {
                     // Delete the pending order after successful stock rollback
                     await Order.updateOne({ _id: order._id }, { $set: { status: 'pending_stock_rolledback' } });
-                    console.log(`Successfully deleted PENDING Order ID: ${order.orderId} after stock rollback.`);
+                    console.log(`Successfully deleted PENDING Order ID: ${order._id} after stock rollback.`);
                 } catch (error) {
-                    console.error(`Error deleting PENDING Order ID: ${order.orderId} after stock rollback:`, error);
+                    console.error(`Error deleting PENDING Order ID: ${order._id} after stock rollback:`, error);
                     // Optionally, update status to reflect deletion failure if needed
                 }
             } else if (order.status === 'failed') {
                 try {
                     // For failed orders, update status instead of deleting
                     await Order.updateOne({ _id: order._id }, { $set: { status: 'failed_stock_rolledback' } });
-                    console.log(`Updated FAILED Order ID: ${order.orderId} to 'failed_stock_rolledback' after stock rollback.`);
+                    console.log(`Updated FAILED Order ID: ${order._id} to 'failed_stock_rolledback' after stock rollback.`);
                 } catch (error) {
                     console.error(`Error updating FAILED Order ID: ${order.orderId} status after stock rollback:`, error);
                 }

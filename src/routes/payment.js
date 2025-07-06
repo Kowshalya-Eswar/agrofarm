@@ -90,7 +90,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
         const payment = await Payment.findOne({ orderId: paymentDetails.order_id});
         payment.status = paymentDetails.status;
         await payment.save();
-        const order = await Order.findOne({orderId:paymentDetails.order_id})
+        const order = await Order.findById(paymentDetails.order_id)
         if (req.body.event == "payment.captured") {
             order.status = "processing";
         } else if (req.body.event == "payment.failed") {

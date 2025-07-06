@@ -40,7 +40,7 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
         await newShipment.save();
 
         // Optional: Update the associated order's status to 'shipped' if that's your workflow
-        await Order.findOneAndUpdate({orderId: orderId}, { status: 'shipped' });
+        await Order.findByIdAndUpdate(orderId, { status: 'shipped' });
 
         res.status(201).json({
             message: "Shipment created successfully",
@@ -227,9 +227,9 @@ shipmentRouter.patch('/api/shipments/:trackingNumber/status', userAuth, adminAut
 
         // Optional: Update associated order status if shipment is delivered
         if (updatedShipment.status === 'delivered') {
-            await Order.findOneAndUpdate({orderId: updatedShipment.orderId}, { status: 'delivered' });
+            await Order.findOneAndUpdate({_id: updatedShipment.orderId}, { status: 'delivered' });
         } else if (updatedShipment.status === 'failed' || updatedShipment.status === 'returned') {
-            await Order.findOneAndUpdate({orderId: updatedShipment.orderId}, { status: 'shipment_failed' }); 
+            await Order.findOneAndUpdate({_id: updatedShipment.orderId}, { status: 'shipment_failed' }); 
         }
 
 

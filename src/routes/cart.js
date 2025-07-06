@@ -15,7 +15,13 @@ cartRouter.post("/api/cart/add", async (req, res) => {
     try {
         const stock = await redis.get(stockKey);
         const currentStock = parseInt(stock || 0, 10);
-        if (currentStock < quantity) {
+
+        const currentHoldQuantityStr = await redis.hget(holdKey, 'quantity');
+        const currentHoldQuantity = parseInt(currentHoldQuantityStr || 0, 10);
+
+        const newTotalHoldQuantity = currentHoldQuantity + quantity;
+
+        if (currentStock < newTotalHoldQuantity) {
             return sendErrorResponse(res, 400, "Not enough stock available");
         }
 
@@ -88,10 +94,10 @@ cartRouter.post('/api/cart/restore-stock', async (req, res) => {
     for (const item of items) {
       const holdKey = `hold:${item.productId}:${cartId}`;
       const stockKey = `stock:${item.productId}`;
-
+  
       // Fetch held quantity from Redis hash
-      const quantityStr = await redis.hget(holdKey, "quantity");
-      const qty = parseInt(quantityStr || "0", 10);
+      //const quantityStr = await redis.hget(holdKey, "quantity");
+      const qty = parseInt(item.quantity || "0", 10);
 
       if (qty > 0) {
         await redis.incrby(stockKey, qty);

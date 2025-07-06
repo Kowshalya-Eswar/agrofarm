@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 const redis = require('../utils/redisConnect');
 const getStockKey = (productId) => `stock:${productId}`;
+const ProductImage = require("../models/productImage");
 productSchema = mongoose.Schema({
     _id: {
         type: String                                
@@ -67,9 +68,9 @@ productSchema.post('findOneAndDelete', async function (doc) {
   if (doc) {
     try {
       await redis.del(getStockKey(doc._id));
-      await Child.deleteMany({ parentId: this._id });
+      await ProductImage.deleteMany({ product_id: this._id });
     } catch (err) {
-      console.error('❌ Redis delete failed:', err);
+      console.error('delete failed:', err);
     }
   }
 });

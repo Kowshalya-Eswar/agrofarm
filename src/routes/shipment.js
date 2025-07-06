@@ -22,7 +22,7 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
         }
 
         // Check if the order exists
-        const order = await Order.findOne({"orderId":orderId});
+        const order = await Order.findById(orderId);
         if (!order) {
             return sendErrorResponse(res, 404, `Order with ID '${orderId}' not found.`);
         }
@@ -57,6 +57,32 @@ shipmentRouter.post('/api/shipments', userAuth, adminAuth, async (req, res) => {
             return sendErrorResponse(res, 400, `Shipment validation failed: ${errors.join(', ')}`, err);
         }
         sendErrorResponse(res, 500, "Failed to create shipment due to an internal server error.", err);
+    }
+});
+/**
+ * @route POST /api/shipments
+ * @description delete the shipment record
+ * @access Private (Authenticated User/Admin)
+ * @middleware userAuth
+ * @body {object} contains shipment id
+ */
+shipmentRouter.delete('/api/shipments', userAuth, adminAuth, async (req, res) => {
+    try {
+        const { shipping_id } = req.body;
+
+        if (!shipping_id) {
+            return sendErrorResponse(res, 400, "Shipping id is required.");
+        }
+        const deleted_shipment = await Shipment.findByIdAndDelete(shipping_id);
+
+        res.json({
+            message: "Shipment deleted successfully",
+            success: true,
+            data: deleted_shipment
+        });
+
+    } catch (err) {
+        sendErrorResponse(res, 500, "Failed to delete shipment entry.", err);
     }
 });
 
@@ -107,7 +133,7 @@ shipmentRouter.get('/api/shipments', userAuth, async (req, res) => {
             queryFilter.trackingNumber = trackingNumber;
         }
 
-        const shipments = await Shipment.find(queryFilter).select('-_id -__v');
+        const shipments = await Shipment.find(queryFilter).select('-__v');
 
         let message = "Shipments retrieved successfully";
         if (trackingNumber) {

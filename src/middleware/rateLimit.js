@@ -17,7 +17,7 @@ const globalLimiter = rateLimit({
 // --- Specific Route Limiter (e.g., for login attempts) ---
 const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit each IP to 5 login attempts per hour
+  max: 20, // Limit each IP to 5 login attempts per hour
   message: {
     status: false,
     code: 429,

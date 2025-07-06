@@ -352,7 +352,7 @@ userRouter.post("/api/login", loginLimiter, async(req,res)=>{
  */
 userRouter.get("/api/profile", userAuth, (req,res)=>{
     res.json({
-        success:true,
+        status:true,
         data:req.user
     })
 })

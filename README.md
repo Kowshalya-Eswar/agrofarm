@@ -56,16 +56,40 @@ Admin functionality: Retrieve all contact messages (with search across name, ema
 
 Admin functionality: Delete contact messages.
 
-Automated Stock & Order Cleanup (Cron Job Feature):
-Stock Rollback for Overdue Pending Orders: Automatically identifies orders that have been in a pending status for more than 15 minutes and increases the stock of their associated products.
+Automated Stock & Order Cleanup (Cron Job Feature)
+Our system employs a robust cron job to ensure efficient and accurate stock management, particularly for orders in pending or failed states. This automated process works in conjunction with our Redis-based cart hold system, where stock is initially reserved when items are added to a user's cart.
 
-Stock Rollback for Failed Orders/ Pending Orders: Identifies orders that are in a failed status and increases the stock of their associated products.
+Key Responsibilities of the Cron Job:
 
-Status Update for Failed Orders: For failed orders, their status is updated to failed_stock_rolledback after stock rollback, preserving a record.
+Stock Rollback for Pending Orders (Overdue):
 
-Status Update for Pending Orders: For failed orders, their status is updated to pending_stock_rolledback after stock rollback, preserving a record.
+The cron job periodically scans for orders that have been in a pending status for longer than 15 minutes.
 
-Scheduled Automation: Runs automatically every 15 minutes to continuously monitor and process orders.
+For such overdue pending orders, it increases the main product stock (stock:<productId>) in Redis for all associated items. This restores the reserved stock back to general availability, as the order has not been finalized within the expected timeframe.
+
+Concurrently, it clears the corresponding Redis cart hold keys (hold:<productId>:<cartId>) for these items, releasing the temporary reservation.
+
+Stock Rollback for Failed Orders:
+
+The cron job identifies orders that are in a failed status.
+
+For these failed orders, it increases the main product stock (stock:<productId>) in Redis for all associated products, returning them to general availability.
+
+Similar to overdue pending orders, it clears the corresponding Redis cart hold keys (hold:<productId>:<cartId>) for these items.
+
+Order Status Update for Cleanup Tracking:
+
+Failed Orders: After successfully rolling back stock for a failed order, the cron job updates the order's status to failed_stock_rolledback. This preserves a historical record and clearly indicates that the stock has been re-integrated into inventory.
+
+Overdue Pending Orders: After successfully rolling back stock for an overdue pending order, the cron job updates the order's status to pending_stock_rolledback. This provides a clear audit trail for pending orders that didn't convert and had their stock returned.
+
+How it integrates with the Cart System:
+
+Initial Stock Reservation (Cart Add): When a user adds an item to their cart via the API, the global stock:<productId> in Redis is immediately decremented, and a hold:<productId>:<cartId> key is created to temporarily reserve that quantity for the specific cart.
+
+Manual Cart Removal: If a user manually removes an item from their cart (before an order is placed), the stock:<productId> is immediately incremented back, and the specific hold:<productId>:<cartId> key is updated or deleted.
+
+Order Success (Hold Clear Only): When an order is successfully placed and processed, the API will only delete the hold:<productId>:<cartId> keys associated with that order's cartId. The actual deduction from the main stock (and permanent commitment) for successful orders is handled by processing logic, which is then reflected correctly in your main database. The cron job then ensures that any unsuccessful reservations (pending/failed) are corrected.
 
 Robust Error Handling: Includes internal try...catch blocks to manage database operation failures and log errors.
 
@@ -108,7 +132,7 @@ AWS SDK (Amazon SES): Integrates with Amazon SES to send various types of transa
 
 Razorpay: Integrated payment gateway to process payments when users proceed to checkout.
 
-node-cron: For scheduling recurring tasks like the stock and order cleanup.
+node-cron: For scheduling recurring tasks like the stock update.
 
 ⚙️ Setup Instructions
 Prerequisites

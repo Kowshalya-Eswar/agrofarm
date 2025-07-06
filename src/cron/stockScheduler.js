@@ -97,15 +97,15 @@ async function restoreExpiringCartHolds() {
 // Minute: */15 (every 15th minute: 0, 15, 30, 45)
 // Hour, Day of Month, Month, Day of Week: * (every)
 cron.schedule('1/15 * * * *', async () => {
-    console.log(`[${new Date().toISOString()}] Running stock management cron job for pending/failed orders...`);
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+   //console.log(`[${new Date().toISOString()}] Running stock management cron job for pending/failed orders...`);
+    //const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
     try {
         // Find orders that are:
         // 1. In 'pending' status AND older than 15 minutes OR
         // 2. In 'failed' status
     
-        const ordersToProcess = await Order.find({
+      /*  const ordersToProcess = await Order.find({
             $or: [
                 {
                     status: 'pending',
@@ -125,7 +125,7 @@ cron.schedule('1/15 * * * *', async () => {
             }
         } else {
             console.log('No pending orders older than 15 minutes or failed orders found.');
-        }
+        }*/
         // Also restore Redis stock holds (cart logic)
         await restoreExpiringCartHolds();
 

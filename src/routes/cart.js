@@ -67,6 +67,48 @@ cartRouter.post("/api/cart/remove", async (req, res) => {
     }
 });
 
+//clear all hold keys once the order processed
+cartRouter.post("/api/cart/clear-all-items", async (req, res) => {
+    const { cartId } = req.body;
+
+    if (!cartId) {
+        return sendErrorResponse(res, 400, "Invalid request: cartId is required.");
+    }
+
+    try {
+        let cursor = '0';
+        let keysToDelete = [];
+        const pattern = `hold:*:${cartId}`; // Matches "hold:<productId>:<cartId>"
+
+        do {
+            const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+            keysToDelete = keysToDelete.concat(keys);
+            cursor = nextCursor;
+        } while (cursor !== '0');
+
+        if (keysToDelete.length > 0) {
+            // Use UNLINK for asynchronous deletion (non-blocking) which is good for many keys.
+            // If UNLINK is not available or you prefer DEL, you can use multi.del().
+            await redis.unlink(keysToDelete); // UNLINK is generally preferred for deleting many keys at once
+
+            res.json({
+                message: `Cart ${cartId} holds cleared. ${keysToDelete.length} items' holds deleted (no stock restoration).`,
+                status: true,
+                removedHoldCount: keysToDelete.length // Renamed for clarity
+            });
+        } else {
+            res.json({
+                message: `No active holds found for cart ${cartId} to clear.`,
+                status: true,
+                removedHoldCount: 0
+            });
+        }
+
+    } catch (err) {
+        console.error("Error clearing cart holds after order:", err);
+        sendErrorResponse(res, 500, "Failed to clear cart holds", err);
+    }
+});
 
 // Set initial stock
 cartRouter.post("/api/stock/set", userAuth, async (req, res) => {

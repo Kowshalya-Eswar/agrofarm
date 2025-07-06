@@ -60,7 +60,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
                 productNameAtOrder: product.productname
             });
         }
-        const result = await createPayment(userId, calculatedTotalAmount, req.user.firstName, req.user.lastName);
+        const result = await createPayment(userId, calculatedTotalAmount, req.user.firstName, req.user.lastName, req.user.email);
         if (!result.success) {
             const errorObj = result.err;
             const statusCode =  errorObj?.statusCode || 500;

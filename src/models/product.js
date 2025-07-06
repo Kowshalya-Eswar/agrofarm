@@ -75,6 +75,7 @@ productSchema.post('findOneAndDelete', async function (doc) {
   }
 });
 
+/*
 // After stock is updated via findOneAndUpdate
 productSchema.post('findOneAndUpdate', async function (doc) {
   try {
@@ -105,7 +106,7 @@ productSchema.post('updateOne', async function () {
     console.error('Failed to update Redis stock in updateOne:', err);
   }
 });
-
+*/
 productSchema.virtual('images', {
   ref: 'ProductImage',
   localField: '_id',

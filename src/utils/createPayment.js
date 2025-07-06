@@ -1,7 +1,7 @@
 const sendErrorResponse = require("../utils/sendErrorResponse");
 const Payment = require("../models/payment");
 const razorpayInstance = require("../utils/razorpay");
-const createPayment = async(userId, amount, firstName, lastName) =>{
+const createPayment = async(userId, amount, firstName, lastName, email) =>{
     try {
             amount = amount * 100;
             if (!userId || amount === undefined || amount < 0) {
@@ -15,7 +15,8 @@ const createPayment = async(userId, amount, firstName, lastName) =>{
                 "partial_payment":false,
                 "notes": {
                     firstName,
-                    lastName
+                    lastName,
+                    email,
                 }
             })
         

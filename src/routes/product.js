@@ -100,7 +100,7 @@ productRouter.get('/api/product', async(req,res)=>{
         }
         const skip = (pageNum - 1) * limitNum;
         const sortOptions = {};
-        const validSortFields = ['productname', 'description', 'price', 'stock','quantity'];
+        const validSortFields = ['productname', 'description', 'price', 'stock','quantity', 'createdAt', 'updatedAt'];
         if (validSortFields.includes(sortBy)) {
             sortOptions[sortBy] = (order === 'desc' ? -1 : 1);
         } else {

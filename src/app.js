@@ -29,6 +29,7 @@ if (!fs.existsSync(uploadsDir)) {
     //console.log(`Created uploads directory at: ${uploadsDir}`);
 }
 
+app.set('trust proxy', 1); // or true
 //app.use(globalLimiter);
 app.use('/uploads', express.static(uploadsDir)); // Serve static files from /uploads
 // Call the connectDB function to establish a connection to the database.

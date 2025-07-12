@@ -59,7 +59,7 @@ productSchema.pre('save', async function (next) {
     }
     next();
   } catch (err) {
-    console.error('Error in pre-save:', err);
+    //console.error('Error in pre-save:', err);
     next(err); // pass error to Mongoose
   }
 });
@@ -70,7 +70,7 @@ productSchema.post('findOneAndDelete', async function (doc) {
       await redis.del(getStockKey(doc._id));
       await ProductImage.deleteMany({ product_id: this._id });
     } catch (err) {
-      console.error('delete failed:', err);
+      //console.error('delete failed:', err);
     }
   }
 });

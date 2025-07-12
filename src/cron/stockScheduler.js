@@ -96,7 +96,7 @@ async function restoreExpiringCartHolds() {
 // Cron syntax: * * 15 * * * *
 // Minute: */15 (every 15th minute: 0, 15, 30, 45)
 // Hour, Day of Month, Month, Day of Week: * (every)
-cron.schedule('1/15 * * * *', async () => {
+/*cron.schedule('1/15 * * * *', async () => {
    //console.log(`[${new Date().toISOString()}] Running stock management cron job for pending/failed orders...`);
     //const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
@@ -126,10 +126,10 @@ cron.schedule('1/15 * * * *', async () => {
         } else {
             console.log('No pending orders older than 15 minutes or failed orders found.');
         }*/
-        // Also restore Redis stock holds (cart logic)
+   /*     // Also restore Redis stock holds (cart logic)
         await restoreExpiringCartHolds();
 
     } catch (error) {
         console.error('Error in stock management cron job:', error);
     }
-});
+});*/

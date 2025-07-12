@@ -136,7 +136,7 @@ userRouter.get("/api/users", userAuth, async (req,res)=> {
             sortOptions[sortBy] = (order === 'desc' ? -1 : 1);
         } else {
             sortOptions['createdAt'] = -1;
-            console.warn(`Invalid sortBy field: ${sortBy}. Defaulting to 'createdAt'.`);
+            //console.warn(`Invalid sortBy field: ${sortBy}. Defaulting to 'createdAt'.`);
         }
         const users = await User.find(queryFilter).sort(sortOptions).skip(skip).limit(limitNum).select('-__v');
         const totalUsers = await User.countDocuments(queryFilter);

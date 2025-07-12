@@ -4,7 +4,7 @@
 const sendErrorResponse = (res, statusCode, message, error = null) => {
     // Log the error to the console for debugging purposes.
     // This includes the HTTP status code, a human-readable message, and the actual error object (if provided).
-    console.error(`Error ${statusCode}: ${message}`, error);
+    //console.error(`Error ${statusCode}: ${message}`, error);
 
     // Send the HTTP status code and a JSON response to the client.
     res.status(statusCode).json({

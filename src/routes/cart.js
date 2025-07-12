@@ -33,7 +33,7 @@ cartRouter.post("/api/cart/add", async (req, res) => {
 
         res.json({ message: "Item added to cart", status: true });
     } catch (err) {
-        console.log(err);
+        //console.log(err);
         sendErrorResponse(res, 500, "Failed to add cart", err);
     }
 });
@@ -62,7 +62,7 @@ cartRouter.post("/api/cart/remove", async (req, res) => {
 
         res.json({ message: "Item removed from cart and stock restored", status: true });
     } catch (err) {
-        console.error("Error removing item from cart:", err);
+        //console.error("Error removing item from cart:", err);
         sendErrorResponse(res, 500, "Failed to remove from cart", err);
     }
 });
@@ -105,7 +105,7 @@ cartRouter.post("/api/cart/clear-all-items", async (req, res) => {
         }
 
     } catch (err) {
-        console.error("Error clearing cart holds after order:", err);
+        //console.error("Error clearing cart holds after order:", err);
         sendErrorResponse(res, 500, "Failed to clear cart holds", err);
     }
 });
@@ -119,7 +119,7 @@ cartRouter.post("/api/stock/set", userAuth, async (req, res) => {
         await redis.set(stockKey, stock);
         res.json({ message: "Stock initialized", status: true });
     } catch (err) {
-        console.error(err);
+        //console.error(err);
         sendErrorResponse(res, 500, "Failed to set stock", err);
     }
 });
@@ -145,15 +145,15 @@ cartRouter.post('/api/cart/restore-stock', async (req, res) => {
         await redis.incrby(stockKey, qty);
         await redis.del(holdKey);
 
-        console.log(`Restored ${qty} units for product ${item.productId} from cart ${cartId}`);
+        //console.log(`Restored ${qty} units for product ${item.productId} from cart ${cartId}`);
       } else {
-        console.warn(`No valid hold quantity for product ${item.productId} and cart ${cartId}`);
+        //console.warn(`No valid hold quantity for product ${item.productId} and cart ${cartId}`);
       }
     }
 
     res.json({ status: true, message: "Stock restored from cart" });
   } catch (err) {
-    console.error("Failed to restore stock:", err);
+    //console.error("Failed to restore stock:", err);
     res.status(500).json({ status: false, message: "Stock restore failed", error: err.message });
   }
 });
@@ -173,7 +173,7 @@ cartRouter.get('/api/stock/:productId', async (req, res) => {
       status: true,
     });
   } catch (err) {
-    console.error(err);
+    //console.error(err);
     sendErrorResponse(res, 500, "Failed to fetch stock", err);
   }
 });

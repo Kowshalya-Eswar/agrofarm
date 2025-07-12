@@ -20,7 +20,7 @@ const connectDB = async () => {
     } catch (err) {
         // If an error occurs during connection, log it and re-throw to be caught
         // by the calling function (e.g., in app.js).
-        console.error("MongoDB connection error:", err);
+        //console.error("MongoDB connection error:", err);
         throw err; // Re-throw the error to indicate connection failure upstream.
     }
 }

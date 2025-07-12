@@ -26,7 +26,7 @@ const uploadsDir = path.join(__dirname, '..', 'public/uploads');
 
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
-    console.log(`Created uploads directory at: ${uploadsDir}`);
+    //console.log(`Created uploads directory at: ${uploadsDir}`);
 }
 
 //app.use(globalLimiter);
@@ -34,9 +34,9 @@ app.use('/uploads', express.static(uploadsDir)); // Serve static files from /upl
 // Call the connectDB function to establish a connection to the database.
 // Use .then() for a successful connection and .catch() for connection errors.
 connectDB().then(() => {
-    console.log("database connection established");
+   // console.log("database connection established");
 }).catch(() => {
-    console.log("database not connected")
+   // console.log("database not connected")
 })
 
 // --- Middleware Setup ---
@@ -63,5 +63,5 @@ app.use("/", cartRouter);
 
 // Start the Express server and make it listen for incoming requests on the specified port.
 app.listen(PORT, () => {
-    console.log(`server is start running on port ${PORT}`);
+   // console.log(`server is start running on port ${PORT}`);
 });

@@ -12,7 +12,7 @@ const uploadsDir = path.join(__dirname, '../..', 'public/uploads');
 // Ensure the 'uploads' directory exists. If not, create it synchronously.
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
-    console.log(`Created uploads directory at: ${uploadsDir}`);
+    //console.log(`Created uploads directory at: ${uploadsDir}`);
 }
 
 // --- Multer Disk Storage Configuration ---

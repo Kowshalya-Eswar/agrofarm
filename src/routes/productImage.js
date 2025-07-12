@@ -200,9 +200,9 @@ productImageRouter.patch(
 
                 if (fs.existsSync(oldFilePath) && oldFilename !== newUploadedFile.filename) { // Ensure not deleting newly uploaded file if somehow name matches
                     fs.unlinkSync(oldFilePath);
-                    console.log(`Deleted old image file: ${oldFilePath}`);
+                    //console.log(`Deleted old image file: ${oldFilePath}`);
                 } else if (!fs.existsSync(oldFilePath)) {
-                    console.warn(`Old image file not found on disk: ${oldFilePath}`);
+                    //console.warn(`Old image file not found on disk: ${oldFilePath}`);
                 }
             } else if (manualImageUrl) {
                 // No new file uploaded, but a new imageUrl was provided manually in the body.
@@ -309,9 +309,9 @@ productImageRouter.delete('/api/productimages/image/:id', userAuth, adminAuth, a
 
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-            console.log(`Deleted file: ${filePath}`);
+            //console.log(`Deleted file: ${filePath}`);
         } else {
-            console.warn(`File not found on disk, but database entry deleted: ${filePath}`);
+            //console.warn(`File not found on disk, but database entry deleted: ${filePath}`);
         }
 
         res.status(200).json({

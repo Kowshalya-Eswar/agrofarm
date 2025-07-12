@@ -97,7 +97,7 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
             order.status = "failed";
         }
         await order.save();
-        console.log("order saved");
+        //console.log("order saved");
         if (req.body.event == "payment.captured") {
             const notes = paymentDetails.notes;
             const userEmail = notes ? notes.email : 'N/A';
@@ -187,11 +187,11 @@ paymentRouter.post("/api/payment/hook", async(req, res) =>{
             `;
             mailStatus = await sendEmail.run(emailSubject, emailHtmlBody, userEmail);
         } 
-        console.log("order updated");
+        //console.log("order updated");
         return res.status(200).json({ msg: "webhook received successfully" });
 
     } catch (err) {
-        console.error("Error in webhook handler:", err);
+        //console.error("Error in webhook handler:", err);
         return res.status(500).json({ msg: err.message });
     }
 })

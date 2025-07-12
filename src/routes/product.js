@@ -105,7 +105,7 @@ productRouter.get('/api/product', async(req,res)=>{
             sortOptions[sortBy] = (order === 'desc' ? -1 : 1);
         } else {
             sortOptions['createdAt'] = -1;
-            console.warn(`Invalid sortBy field: ${sortBy}. Defaulting to 'createdAt'.`);
+            //console.warn(`Invalid sortBy field: ${sortBy}. Defaulting to 'createdAt'.`);
         }
         const products = await Product.find(queryFilter).sort(sortOptions).skip(skip).limit(limitNum).populate({path:'images', select:'imageUrl isMain'}).select('-__v');
         const totalProducts = await Product.countDocuments(queryFilter);
@@ -153,7 +153,7 @@ productRouter.get('/api/product/:id', async(req,res)=>{
 productRouter.delete("/api/product/:id", userAuth, adminAuth, async(req,res)=>{
     try {
         const { id } = req.params;
-        console.log("Attempting to delete product with id:", id);
+        //console.log("Attempting to delete product with id:", id);
 
         const deletedProduct = await Product.findByIdAndDelete(id);
 

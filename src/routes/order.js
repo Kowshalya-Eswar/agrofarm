@@ -1,4 +1,5 @@
 const express = require("express");
+const sendPaymentRequest = require('../utils/paymentCreationService');
 const orderRouter = express.Router();
 const sendErrorResponse = require("../utils/sendErrorResponse");
 const Order = require("../models/order");
@@ -60,9 +61,17 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
                 productNameAtOrder: product.productname
             });
         }
-        const result = await createPayment(userId, calculatedTotalAmount, req.user.firstName, req.user.lastName, req.user.email);
-        if (!result.success) {
-            const errorObj = result.err;
+        const paymentRequestData = {
+            userId,
+            amount:calculatedTotalAmount,
+            firstName:req.user.firstName,
+            lastName:req.user.lastName,
+            email:req.user.email,
+        }
+        const paymentResponse = await sendPaymentRequest(paymentRequestData);
+       // const result = await createPayment(userId, calculatedTotalAmount, req.user.firstName, req.user.lastName, req.user.email);
+        if (paymentResponse.status != 'success') {
+            const errorObj = paymentResponse.err;
             const statusCode =  errorObj?.statusCode || 500;
             const description =  errorObj?.error?.description || 'internal server error';
             res.status(statusCode).json({
@@ -73,7 +82,7 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         }
   
         const newOrder = new Order({
-            _id: result.data.orderId,
+            _id: paymentResponse.data.orderId,
             userId,
             items: orderItemsForDb,
             totalAmount: calculatedTotalAmount,
@@ -83,14 +92,15 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
 
         await newOrder.save();
         res.status(201).json({
-            message: result.message,
+            message: paymentResponse.message,
             success: true,
             data: {
-                ...result.data.toJSON(), 
+                ...paymentResponse.data, 
                 key: process.env.RAZORPAY_KEY_ID,
             }
         });
     } catch (err) {
+        console.log(err);
         if (err.name === 'ValidationError') {
             const errors = Object.keys(err.errors).map(key => err.errors[key].message);
             return sendErrorResponse(res, 400, `Order validation failed: ${errors.join(', ')}`, err);

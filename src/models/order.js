@@ -95,7 +95,7 @@ const orderSchema = mongoose.Schema({
 });
 
 // Create the Order model from the defined schema.
-const Order = mongoose.model("Order", orderSchema);
+const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 // Export the Order model.
 module.exports = Order;

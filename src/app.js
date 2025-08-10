@@ -4,7 +4,6 @@ require('dotenv').config();
 const express               = require("express");
 const userRouter            = require("./routes/user");
 const productRouter         = require("./routes/product");
-const paymentRouter         = require("./routes/payment");
 const productImageRouter    = require('./routes/productImage');
 const orderRouter           = require("./routes/order");
 const shipmentRouter        = require("./routes/shipment");
@@ -18,7 +17,7 @@ const { globalLimiter } = require("./middleware/rateLimit");
 const app = express();
 const PORT = process.env.PORT || 7777;
 const connectDB = require("./config/database");
-
+require('./utils/paymentConsumeService');
 const path = require('path'); // For serving static files
 const fs = require('fs');
 const cors = require('cors');
@@ -57,7 +56,6 @@ app.use("/", userRouter);
 app.use("/", productRouter);
 app.use("/", productImageRouter);
 app.use("/", orderRouter);
-app.use("/", paymentRouter);
 app.use("/", shipmentRouter);
 app.use("/", contactRouter);
 app.use("/", cartRouter);

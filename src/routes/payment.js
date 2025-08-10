@@ -2,7 +2,6 @@ const express = require("express");
 const paymentRouter = express.Router();
 const sendErrorResponse = require("../utils/sendErrorResponse");
 const Payment = require("../models/payment");
-const Order = require("../models/order");
 const { userAuth, adminAuth } = require('../middleware/auth');
 const sendEmail = require("../utils/sendEmail");
 const {validateWebhookSignature} = require('razorpay/dist/utils/razorpay-utils');

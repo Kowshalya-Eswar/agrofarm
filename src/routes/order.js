@@ -149,7 +149,7 @@ orderRouter.get('/api/payments', userAuth, async (req, res) => {
         const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL;
         const paymentResponse = await axios.post(
             `${paymentServiceUrl}/api/payments`, 
-            {orderIds: [queryFilter.orderId]},
+            {orderIds: queryFilter.orderId},
             {
                 headers: {
                     'x-api-key': process.env.PAYMENT_SERVICE_TOKEN

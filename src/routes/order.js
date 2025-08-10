@@ -5,8 +5,7 @@ const sendErrorResponse = require("../utils/sendErrorResponse");
 const Order = require("../models/order");
 const Product = require("../models/product");
 const { userAuth, adminAuth } = require('../middleware/auth');
-const mongoose = require('mongoose');
-const createPayment = require("../utils/createPayment");
+const axios = require("axios");
 /**
  * @route POST /api/orders
  * @description Creates a new order for the authenticated user.
@@ -108,7 +107,92 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
         sendErrorResponse(res, 500, "Failed to create order due to an internal server error.", err);
     }
 });
+/**
+ * @route GET /api/payments
+ * @description Retrieves payment records. Admin can fetch all payments. Regular users can fetch their own payments.
+ * Can filter payments by `orderId`  using query parameters.
+ * @access Private (Authenticated User/Admin)
+ * @middleware userAuth
+ * @query orderId {string} - Optional. The MongoDB _id of the order to filter payments by.
+ */
+orderRouter.get('/api/payments', userAuth, async (req, res) => {
+    try {
+        const {orderId} = req.query;
+        const isAdmin = req.user.role.includes('admin');
+        let queryFilter = {};
+        if (!isAdmin) {
+            const userOrders = await Order.find({user_id:req.user.user_id});
+            if(userOrders.length == 0) {
+                res.status(200).json({
+                    message: 'no orders found for the user',
+                    status: true
+                })
+            }
+            const userorderIds = userOrders.map(order => order.orderId);
+            queryFilter.orderId = {$in:userorderIds}
+        }
+        if (orderId) {
+            queryFilter.orderId = orderId;
+            if(!isAdmin) {
+                //check if any of the orderId in query filter has  orderId got in request
+                if(!queryFilter.orderId.$in.some(id => id.equals(orderId))) {
+                     res.status(200).json({
+                        message: 'The order not found',
+                        status: true
+                    })
+                } 
+            }
+        }
+        if(!queryFilter.orderId) {
+            queryFilter.orderId = []
+        }
+        const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL;
+        const paymentResponse = await axios.post(
+            `${paymentServiceUrl}/api/payments`, 
+            {orderIds: [queryFilter.orderId]},
+            {
+                headers: {
+                    'x-api-key': process.env.PAYMENT_SERVICE_TOKEN
+                }
+            }
+        );
 
+        const payments = paymentResponse.data.data;
+        const success = paymentResponse.data.success;
+        const messageFromPaymentService = paymentResponse.data.message;
+
+        if (!success) {
+            // Payment service responded with failure
+            return res.status(502).json({
+                message: 'Failed to retrieve payments from payment service',
+                success: false,
+                details: messageFromPaymentService
+            });
+        }
+
+        if (orderId) {
+            message = `Payments retrieved successfully for order ID '${orderId}'`;
+        } else if (!isAdmin) {
+            message = "Your payments retrieved successfully";
+        } else {
+            message = "All payments retrieved successfully (Admin)";
+        }
+
+        if (payments.length === 0 && (orderId || !isAdmin)) {
+            // or if it's a non-admin request with no payments found.
+            // If it's an admin requesting all payments and none exist, it returns 200 with an empty array.
+            return sendErrorResponse(res, 404, `No payments found matching the criteria.`);
+        }
+
+        res.status(200).json({
+            message: message,
+            success: true,
+            data: payments
+        });
+    } catch (err) {
+        sendErrorResponse(res, 500, "Failed to retrieve payments.", err);
+    }
+});
 /**
  * @route GET /api/orders
  * @description Retrieves all orders placed by current user in the system.

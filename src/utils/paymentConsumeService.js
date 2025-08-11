@@ -8,7 +8,7 @@ async function processPaymentStatusUpdated(paymentDetails, paymentStatus) {
         const order = await Order.findById(paymentDetails.order_id)
         if (paymentStatus == "captured") {
             order.status = "processing";
-        } else if (paymentStatus == "payment.failed") {
+        } else if (paymentStatus == "failed") {
             order.status = "failed";
         }
         await order.save();

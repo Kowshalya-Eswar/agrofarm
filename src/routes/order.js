@@ -99,7 +99,6 @@ orderRouter.post('/api/orders', userAuth, async (req, res) => {
             }
         });
     } catch (err) {
-        console.log(err);
         if (err.name === 'ValidationError') {
             const errors = Object.keys(err.errors).map(key => err.errors[key].message);
             return sendErrorResponse(res, 400, `Order validation failed: ${errors.join(', ')}`, err);

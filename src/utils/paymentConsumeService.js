@@ -12,7 +12,6 @@ async function processPaymentStatusUpdated(paymentDetails, paymentStatus) {
             order.status = "failed";
         }
         await order.save();
-        console.log("order saved");
         if (paymentStatus == "captured") {
             const notes = paymentDetails.notes;
             const userEmail = notes ? notes.email : 'N/A';

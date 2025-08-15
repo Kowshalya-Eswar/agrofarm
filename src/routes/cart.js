@@ -50,10 +50,19 @@ cartRouter.post("/api/cart/remove", async (req, res) => {
         if (isNaN(restoreQty) || restoreQty <= 0) {
             return sendErrorResponse(res, 400, "Invalid quantity to restore");
         }
+        const currentHoldQuantityStr = await redis.hget(holdKey, 'quantity');
+        const currentHoldQuantity = parseInt(currentHoldQuantityStr || 0, 10);
 
+        if(restoreQty > currentHoldQuantity) {
+           return sendErrorResponse(res, 400, "Cannot restore more stock than held in the cart");
+        }
         // Increment stock back
         await redis.incrby(stockKey, restoreQty);
 
+        if(restoreQty < currentHoldQuantity) {
+           await redis.hincrby(holdKey, 'quantity', -restoreQty);
+           return res.json({ message: "Item removed from cart and stock restored", status: true });
+        }
         // Delete the hold hash (if it exists)
         const exists = await redis.exists(holdKey);
         if (exists) {
